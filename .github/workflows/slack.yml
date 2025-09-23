@@ -1,0 +1,17 @@
+name: Samra Slack App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:  # ✅ must be plural
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run a sample script
+        run: echo "Hello from Samra Slack App workflow!"
