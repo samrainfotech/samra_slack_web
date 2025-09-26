@@ -23,6 +23,17 @@ function Dashboard() {
   const { user, logout } = useAuth();
 
   return (
+<<<<<<< HEAD
+    <div className="">
+
+    </div>
+  )
+}
+
+export default App
+
+  
+=======
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
       <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
         <h1 className="text-2xl font-bold mb-4">
@@ -52,3 +63,4 @@ function App() {
 }
 
 export default App;
+>>>>>>> ae1ead984bab4bc853237d32f47f63654bd5027e
