@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -10,6 +9,7 @@ const Login = () => {
     password: '',
     email: '',
   });
+
   const [connectionError, setConnectionError] = useState('');
 
   const { login, loading, error, clearError } = useAuth();
@@ -94,11 +94,7 @@ const Login = () => {
           <p className="text-sm text-blue-700 font-medium">Admin Login Help:</p>
           <p className="text-xs text-blue-600 mt-1">
             • Check if admin account exists in database
-            <br />
-            • Common credentials: admin/admin123
-            <br />
-            • Username/password are case-sensitive
-            <br />• Contact system administrator for credentials
+            <br />• Common credentials: admin/admin123
           </p>
         </div>
       );
@@ -303,3 +299,5 @@ const Login = () => {
 };
 
 export default Login;
+
+
