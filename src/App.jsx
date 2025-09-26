@@ -1,66 +1,79 @@
-
-// import Login from './pages/Login';
-// import { useAuth } from './context/AuthContext';
-
-// function App() {
-//   const { user } = useAuth();
-
-//   return ( 
-//     <Router>
-//       <Routes>
-//         <Route path="/" element={user ? <h1>Dashboard   hello</h1> : <Login />} />
-//       </Routes>
-//     </Router>
-//   );
-// }
-
-// export default App;
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './pages/Login';
-import { useAuth } from './context/AuthContext';
-
-function Dashboard() {
-  const { user, logout } = useAuth();
-
-  return (
-<<<<<<< HEAD
-    <div className="">
-
-    </div>
-  )
-}
-
-export default App
-
-  
-=======
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-        <h1 className="text-2xl font-bold mb-4">
-          Welcome, {user?.username} ({user?.role})
-        </h1>
-        <button
-          onClick={logout}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Logout
-        </button>
-      </div>
-    </div>
-  );
-}
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import Login from "./pages/Login";
+import { useAuth } from "./context/AuthContext";
+// import UserDashboard from "./pages/UserDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import { Toaster } from "react-hot-toast";
+import ProtectedRoute from "./ProtectedRoute";
+import UserDashboard from "./pages/user/UserDashboard";
+// import ProtectedRoute from "./ProtectedRoute";
+// import ProtectedRoute from "./components/ProtectedRoute"; // import
 
 function App() {
   const { user } = useAuth();
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={user ? <Dashboard /> : <Login />} />
-      </Routes>
-    </Router>
+    <div>
+      <Router>
+        <Toaster />
+        <Routes>
+          {/* Default: redirect root to correct dashboard or login */}
+          <Route path="/" element={<Login />} />
+
+          {/* Login should redirect if already logged in */}
+          <Route
+            path="/login"
+            element={
+              user ? (
+                <Navigate
+                  to={user.role === "admin" ? "/admin" : "/user"}
+                  replace
+                />
+              ) : (
+                <Login />
+              )
+            }
+          />
+
+          {/* Protected Dashboards */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user"
+            element={
+              <ProtectedRoute allowedRoles={["user"]}>
+                <UserDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch-all unknown routes */}
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to={
+                  user ? (user.role === "admin" ? "/admin" : "/user") : "/login"
+                }
+                replace
+              />
+            }
+          />
+        </Routes>
+      </Router>
+    </div>
   );
 }
 
 export default App;
->>>>>>> ae1ead984bab4bc853237d32f47f63654bd5027e
