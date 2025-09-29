@@ -313,8 +313,8 @@ export default function Login() {
   const { login, user, error, clearError, authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [role, setRole] = useState('admin');
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [role, setRole] = useState("admin");
+  const [form, setForm] = useState({ username: "", password: "", email: "" });
   const [loading, setLoading] = useState(false);
   const [connectionError, setConnectionError] = useState('');
 
@@ -371,7 +371,7 @@ export default function Login() {
   };
   const handleRoleChange = (type) => {
     setRole(type);
-    setForm({ username: '', password: '' });
+    setForm({ username: "", password: "", email: "" });
     clearError();
     setConnectionError('');
   };
