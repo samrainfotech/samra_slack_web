@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import Select from "react-select"; 
+import Select from "react-select";
 import { IoMdAdd } from "react-icons/io";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 
-export default function CreateChannel() {
+export default function CreateChannel({ onChannelCreated }) {
   const { user } = useAuth();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -18,40 +18,36 @@ export default function CreateChannel() {
   const [loading, setLoading] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
 
-  // ✅ Fetch users list
+  // ✅ Fetch all users (except creator)
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const res = await axios.get(`${BACKEND_URL}/users`, {
           headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
         });
-
-        // ❌ Remove creator from dropdown
-        const filtered = (res.data.users || []).filter((u) => u._id !== user?._id);
-
-        setAllUsers(filtered);
-      } catch (e) {
-        console.error("Error fetching users", e);
-        setAllUsers([]);
+        const users = res.data.users || [];
+        setAllUsers(users.filter((u) => u._id !== user?._id));
+      } catch (err) {
+        console.error("Error fetching users", err);
       }
     };
     fetchUsers();
   }, [BACKEND_URL, user?._id, user?.token]);
 
-  // ✅ Format options for react-select
+  // Options for react-select
   const userOptions = allUsers.map((u) => ({
     value: u._id,
     label: `${u.username} (${u.email})`,
   }));
 
   const handleMemberChange = (selected) => {
-    setForm({
-      ...form,
+    setForm((prev) => ({
+      ...prev,
       members: selected ? selected.map((s) => s.value) : [],
-    });
+    }));
   };
 
-  const submit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
@@ -59,20 +55,21 @@ export default function CreateChannel() {
       const payload = {
         name: form.name,
         description: form.description,
-        createdBy: user?._id, // ✅ creator sent separately
-        members: [...new Set([user?._id, ...form.members])], // ✅ always includes creator
+        createdBy: user?._id,
+        members: [...new Set([user?._id, ...form.members])],
       };
 
-      console.log("📤 Channel Payload:", payload);
-
-      await axios.post(`${BACKEND_URL}/channels`, payload, {
+      const res = await axios.post(`${BACKEND_URL}/channels`, payload, {
         headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
       });
 
       setForm({ name: "", description: "", members: [] });
-      toast.success("Channel created successfully ✅");
-    } catch (e) {
-      toast.error(e?.response?.data?.message || "Failed to create channel");
+      toast.success("Channel created successfully 🎉");
+
+      // 🔄 trigger refresh in parent
+      onChannelCreated && onChannelCreated(res.data);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to create channel");
     } finally {
       setLoading(false);
     }
@@ -80,17 +77,16 @@ export default function CreateChannel() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <h1 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 text-center">
+      <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
         ➕ Create New Channel
       </h1>
-      <form onSubmit={submit} className="space-y-5">
+
+      <form onSubmit={handleSubmit} className="space-y-5">
         {/* Channel Name */}
         <div>
-          <label className="block font-semibold mb-1 text-gray-700">
-            Channel Name
-          </label>
+          <label className="block font-semibold mb-1">Channel Name</label>
           <input
-            className="p-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
             placeholder="Enter channel name"
             required
             value={form.name}
@@ -100,42 +96,36 @@ export default function CreateChannel() {
 
         {/* Description */}
         <div>
-          <label className="block font-semibold mb-1 text-gray-700">
-            Description
-          </label>
+          <label className="block font-semibold mb-1">Description</label>
           <textarea
-            className="p-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-            placeholder="Enter short description"
+            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
             rows={3}
+            placeholder="Enter short description"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
         </div>
 
-        {/* Members with react-select */}
+        {/* Members */}
         <div>
-          <label className="block font-semibold mb-1 text-gray-700">
-            Add Members
-          </label>
+          <label className="block font-semibold mb-1">Add Members</label>
           <Select
             isMulti
             options={userOptions}
             value={userOptions.filter((u) => form.members.includes(u.value))}
             onChange={handleMemberChange}
-            className="react-select-container"
-            classNamePrefix="react-select"
             placeholder="Select members..."
           />
         </div>
 
-        {/* Submit Button */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
-          className="bg-indigo-600 flex items-center justify-center gap-2 p-3 rounded-lg text-white font-semibold hover:bg-indigo-700 duration-200 w-full"
+          className="w-full flex items-center justify-center gap-2 p-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50"
         >
           {loading ? (
-            <AiOutlineLoading3Quarters className="animate-spin text-lg" />
+            <AiOutlineLoading3Quarters className="animate-spin" />
           ) : (
             <>
               Create Channel <IoMdAdd className="text-xl" />
