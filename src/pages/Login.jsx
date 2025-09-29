@@ -315,7 +315,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [role, setRole] = useState("admin");
-  const [form, setForm] = useState({ username: "", password: "", email: "" });
+  const [form, setForm] = useState({ username: "", password: ""});
   const [loading, setLoading] = useState(false);
   const [connectionError, setConnectionError] = useState("");
 
@@ -357,8 +357,6 @@ export default function Login() {
       username: form.username.trim(),
       password: form.password,
     };
-    if (role === "user") credentials.email = form.email.trim();
-
     const result = await login(role, credentials);
     setLoading(false);
 
@@ -375,7 +373,7 @@ export default function Login() {
   };
   const handleRoleChange = (type) => {
     setRole(type);
-    setForm({ username: "", password: "", email: "" });
+    setForm({ username: "", password: ""});
     clearError();
     setConnectionError("");
   };
@@ -442,24 +440,6 @@ export default function Login() {
               }
             />
           </div>
-
-          {role === "user" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-                disabled={loading}
-                placeholder="Enter your email"
-              />
-            </div>
-          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
