@@ -365,6 +365,8 @@ export default function Login() {
     if (result.success) {
       toast.success("Login successfully");
       console.log(result);
+      console.log("Login response:", result);
+
       
       navigate(role === "admin" ? "/admin" : "/user");
     } else {

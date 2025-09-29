@@ -15,16 +15,11 @@ export default function AddEmployee() {
     e.preventDefault();
     try {
       setLoading(true);
-      await axios.post(
-        `${BACKEND_URL}/users/create`,
-        form,
-        { headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {} }
-      );
+      await axios.post(`${BACKEND_URL}/users/create`, form, {
+        headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
+      });
       setForm({ username: "", email: "", password: "" });
-      console.log(user);
-      
-      toast.success("Employee created");
-      // no need to refetch here; EmployeeList exposes a refresh button and auto refresh on mount
+      toast.success("Employee created successfully ✅");
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to add employee");
     } finally {
@@ -33,55 +28,58 @@ export default function AddEmployee() {
   };
 
   return (
-    <div className="ml-48 m-5 mt-20 p-10 shadow-[0_3px_10px_rgb(0,0,0,0.1)] rounded-xl">
-      <div className=" flex items-center justify-center mb-5">
-        <img src="/logo.png" className="w-20" alt="logo" />
-      </div>
-      <h1 className="text-3xl font-extrabold mb-6 text-center text-black tracking-wide">
-        Add Employee
+    <div className="max-w-lg mx-auto">
+      <h1 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 text-center">
+        ➕ Add New Employee
       </h1>
-      <form onSubmit={submit} className="space-y-5 grid min-w-xl">
+      <form onSubmit={submit} className="space-y-5">
         <div>
-          <label htmlFor="" className=" font-semibold">
-            Enter Username
+          <label className="block font-semibold mb-1 text-gray-700">
+            Username
           </label>
           <input
-            className="p-3 w-full rounded-lg border-2 border-gray-300 focus:border-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Username"
+            className="p-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="Enter username"
             required
             value={form.username}
             onChange={(e) => setForm({ ...form, username: e.target.value })}
           />
         </div>
         <div>
-          <label htmlFor="" className="font-semibold">Enter Email</label>
+          <label className="block font-semibold mb-1 text-gray-700">Email</label>
           <input
-            className="p-3 w-full rounded-lg border-2 border-gray-300 focus:border-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Email"
+            className="p-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="Enter email"
             required
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
         </div>
-
         <div>
-          <label htmlFor="" className="font-semibold">Enter Password</label>
-
+          <label className="block font-semibold mb-1 text-gray-700">
+            Password
+          </label>
           <input
-            className="p-3 w-full rounded-lg border-2 border-gray-300 focus:border-white focus:outline-none focus:ring-1 focus:ring-blue-500"
             type="password"
-            placeholder="Password"
+            className="p-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="Enter password"
             required
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
         </div>
         <button
-          className="bg-blue-500 flex items-center justify-center gap-1 p-3 rounded-lg text-white hover:bg-blue-600 duration-200 cursor-pointer"
+          type="submit"
           disabled={loading}
+          className="bg-indigo-600 flex items-center justify-center gap-2 p-3 rounded-lg text-white font-semibold hover:bg-indigo-700 duration-200 w-full"
         >
-          {loading ? <AiOutlineLoading3Quarters /> : "Add Employee"}
-          {loading ? "" : <IoMdAdd className=" text-xl" />}
+          {loading ? (
+            <AiOutlineLoading3Quarters className="animate-spin text-lg" />
+          ) : (
+            <>
+              Add Employee <IoMdAdd className="text-xl" />
+            </>
+          )}
         </button>
       </form>
     </div>

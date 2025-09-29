@@ -49,11 +49,11 @@ export default function UserList() {
     try {
       setLoading(true);
       const payload = { username: form.username, email: form.email };
-      if (form.password) payload.password = form.password; // only send if filled
+      if (form.password) payload.password = form.password;
       await axios.put(`${BACKEND_URL}/users/${editingId}`, payload, {
         headers: { "Content-Type": "application/json", ...authHeader },
       });
-      toast.success("User updated");
+      toast.success("User updated successfully ✅");
       cancelEdit();
       fetchUsers();
     } catch (e) {
@@ -64,124 +64,105 @@ export default function UserList() {
   };
 
   return (
-    <div className="ml-48 m-5 mt-6 p-6 shadow-[0_3px_10px_rgb(0,0,0,0.1)] rounded-xl">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">All Users</h2>
-        <button
-          className="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200"
-          onClick={fetchUsers}
-          disabled={loading}
-        >
-          Refresh
-        </button>
-      </div>
-
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left">
-            <thead>
-              <tr className="border-b">
-                <th className="p-2">Username</th>
-                <th className="p-2">Email</th>
-                <th className="p-2">Password</th>
-                <th className="p-2">Actions</th>
+    <div className="overflow-x-auto">
+      <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <thead className="bg-gray-100 text-gray-700">
+          <tr>
+            <th className="p-3 text-left">Username</th>
+            <th className="p-3 text-left">Email</th>
+            <th className="p-3 text-left">Password</th>
+            <th className="p-3 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white">
+          {users?.map((u) => {
+            const id = u._id || u.id;
+            const isEditing = editingId === id;
+            return (
+              <tr
+                key={id}
+                className="border-b hover:bg-gray-50 transition-colors"
+              >
+                <td className="p-3">
+                  {isEditing ? (
+                    <input
+                      className="p-2 border rounded w-full"
+                      value={form.username}
+                      onChange={(e) =>
+                        setForm({ ...form, username: e.target.value })
+                      }
+                    />
+                  ) : (
+                    u.username
+                  )}
+                </td>
+                <td className="p-3">
+                  {isEditing ? (
+                    <input
+                      className="p-2 border rounded w-full"
+                      value={form.email}
+                      onChange={(e) =>
+                        setForm({ ...form, email: e.target.value })
+                      }
+                    />
+                  ) : (
+                    u.email
+                  )}
+                </td>
+                <td className="p-3">
+                  {isEditing ? (
+                    <input
+                      type="password"
+                      className="p-2 border rounded w-full"
+                      value={form.password}
+                      placeholder="New password"
+                      onChange={(e) =>
+                        setForm({ ...form, password: e.target.value })
+                      }
+                    />
+                  ) : (
+                    <span className="text-gray-400">••••••••</span>
+                  )}
+                </td>
+                <td className="p-3 space-x-2">
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={saveEdit}
+                        disabled={loading}
+                        className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => startEdit(u)}
+                      disabled={loading}
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {users?.map((u) => {
-                const id = u._id || u.id;
-                const isEditing = editingId === id;
-                return (
-                  <tr key={id} className="border-b hover:bg-gray-50">
-                    {/* Username */}
-                    <td className="p-2">
-                      {isEditing ? (
-                        <input
-                          className="p-2 border rounded w-full"
-                          value={form.username}
-                          onChange={(e) =>
-                            setForm({ ...form, username: e.target.value })
-                          }
-                        />
-                      ) : (
-                        u.username
-                      )}
-                    </td>
-                    {/* Email */}
-                    <td className="p-2">
-                      {isEditing ? (
-                        <input
-                          className="p-2 border rounded w-full"
-                          value={form.email}
-                          onChange={(e) =>
-                            setForm({ ...form, email: e.target.value })
-                          }
-                        />
-                      ) : (
-                        u.email
-                      )}
-                    </td>
-                    {/* Password */}
-                    <td className="p-2">
-                      {isEditing ? (
-                        <input
-                          type="password"
-                          className="p-2 border rounded w-full"
-                          value={form.password}
-                          placeholder="Enter new password"
-                          onChange={(e) =>
-                            setForm({ ...form, password: e.target.value })
-                          }
-                        />
-                      ) : (
-                        <span className="text-gray-400">••••••••</span>
-                      )}
-                    </td>
-                    {/* Actions */}
-                    <td className="p-2 space-x-2">
-                      {isEditing ? (
-                        <>
-                          <button
-                            className="px-3 py-1 bg-blue-500 text-white rounded"
-                            onClick={saveEdit}
-                            disabled={loading}
-                          >
-                            Save
-                          </button>
-                          <button
-                            className="px-3 py-1 bg-gray-200 rounded"
-                            onClick={cancelEdit}
-                            disabled={loading}
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded"
-                          onClick={() => startEdit(u)}
-                          disabled={loading}
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              {users?.length === 0 && (
-                <tr>
-                  <td className="p-3 text-gray-500" colSpan={4}>
-                    No users found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+            );
+          })}
+          {users?.length === 0 && (
+            <tr>
+              <td colSpan={4} className="p-6 text-center text-gray-500">
+                No users found 🚫
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
