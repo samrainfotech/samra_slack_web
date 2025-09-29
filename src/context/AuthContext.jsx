@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }) => {
         headers: { "Content-Type": "application/json" },
         timeout: 10000,
       });
-      console.log(data);
+      console.log("axs",data);
       
 
       const payload =
@@ -153,8 +153,8 @@ export const AuthProvider = ({ children }) => {
           : {
               role: "user",
               token: data?.accessToken,
-              name: data?.user?.name,
-              _id: data?.user?._id,
+              name: data?.user?.username,
+              _id: data?.user?.id,
             };
 
       setUser(payload);
