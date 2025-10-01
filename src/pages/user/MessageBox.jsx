@@ -74,7 +74,9 @@ export default function ChannelMessages({ channel }) {
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">
         {messages.length === 0 ? (
-          <p className="text-gray-400 text-center mt-10">No messages yet. Start the conversation 🚀</p>
+          <p className="text-gray-400 text-center mt-10">
+            No messages yet. Start the conversation 🚀
+          </p>
         ) : (
           messages.map((msg, idx) => (
             <div
