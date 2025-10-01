@@ -314,7 +314,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [role, setRole] = useState("admin");
-  const [form, setForm] = useState({ username: "", password: "", email: "" });
+  const [form, setForm] = useState({ username: "", password: ""});
   const [loading, setLoading] = useState(false);
   const [connectionError, setConnectionError] = useState('');
 
@@ -362,16 +362,19 @@ export default function Login() {
     if (result.success) {
       toast.success('Login successfully');
       console.log(result);
-      console.log('Login response:', result);
 
-      navigate(role === 'admin' ? '/admin' : '/user');
+      console.log("Login response:", result);
+
+      
+      navigate(role === "admin" ? "/admin" : "/user");
+
     } else {
       toast.error(result.error || 'Invalid credentials');
     }
   };
   const handleRoleChange = (type) => {
     setRole(type);
-    setForm({ username: "", password: "", email: "" });
+    setForm({ username: "", password: ""});
     clearError();
     setConnectionError('');
   };
