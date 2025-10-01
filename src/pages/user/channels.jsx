@@ -16,7 +16,7 @@ export default function Channels({
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Fetch channels
+  //  Fetch channels
   const fetchChannels = useCallback(async () => {
     if (!user?._id) return;
 
@@ -42,14 +42,14 @@ export default function Channels({
     }
   }, [BACKEND_URL, user?._id, user?.token, onChannelsUpdate]);
 
-  // ✅ Handle update of a channel
+  //  Handle update of a channel
   const handleChannelUpdated = (updatedChannel) => {
     setChannels((prev) =>
       prev.map((ch) => (ch._id === updatedChannel._id ? updatedChannel : ch))
     );
   };
 
-  // ✅ Handle deletion of a channel
+  //  Handle deletion of a channel
   const handleChannelDeleted = (deletedId) => {
     setChannels((prev) => prev.filter((ch) => ch._id !== deletedId));
   };
@@ -97,7 +97,6 @@ export default function Channels({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  // ✅ pass update + delete callbacks to modal
                   onEditChannel &&
                     onEditChannel(ch, {
                       onUpdated: handleChannelUpdated,

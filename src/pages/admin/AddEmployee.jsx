@@ -8,7 +8,12 @@ import { useAuth } from "../../context/AuthContext";
 export default function AddEmployee() {
   const { user } = useAuth();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-  const [form, setForm] = useState({ username: "", email: "", password: "" });
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    team: "",
+  });
   const [loading, setLoading] = useState(false);
 
   const submit = async (e) => {
@@ -18,8 +23,8 @@ export default function AddEmployee() {
       await axios.post(`${BACKEND_URL}/users/create`, form, {
         headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
       });
-      setForm({ username: "", email: "", password: "" });
-      toast.success("Employee created successfully ✅");
+      setForm({ username: "", email: "", password: "", team: "" });
+      toast.success("Employee created successfully");
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to add employee");
     } finally {
@@ -30,9 +35,10 @@ export default function AddEmployee() {
   return (
     <div className="max-w-lg mx-auto">
       <h1 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 text-center">
-        ➕ Add New Employee
+        Add New Employee
       </h1>
       <form onSubmit={submit} className="space-y-5">
+        {/* Username */}
         <div>
           <label className="block font-semibold mb-1 text-gray-700">
             Username
@@ -45,6 +51,8 @@ export default function AddEmployee() {
             onChange={(e) => setForm({ ...form, username: e.target.value })}
           />
         </div>
+
+        {/* Email */}
         <div>
           <label className="block font-semibold mb-1 text-gray-700">Email</label>
           <input
@@ -55,6 +63,8 @@ export default function AddEmployee() {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
         </div>
+
+        {/* Password */}
         <div>
           <label className="block font-semibold mb-1 text-gray-700">
             Password
@@ -68,6 +78,25 @@ export default function AddEmployee() {
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
         </div>
+
+        {/* Team */}
+        <div>
+          <label className="block font-semibold mb-1 text-gray-700">Team</label>
+          <select
+            className="p-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+            required
+            value={form.team}
+            onChange={(e) => setForm({ ...form, team: e.target.value })}
+          >
+            <option value="">Select team</option>
+            <option value="IT">IT</option>
+            <option value="Sales">Sales</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Manager">Manager</option>
+          </select>
+        </div>
+
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
