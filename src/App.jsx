@@ -3,14 +3,14 @@ import {
   Routes,
   Route,
   Navigate,
-} from "react-router-dom";
-import Login from "./pages/Login";
-import { useAuth } from "./context/AuthContext";
+} from 'react-router-dom';
+import Login from './pages/Login';
+import { useAuth } from './context/AuthContext';
 // import UserDashboard from "./pages/UserDashboard";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import { Toaster } from "react-hot-toast";
-import ProtectedRoute from "./ProtectedRoute";
-import UserDashboard from "./pages/user/UserDashboard";
+import AdminDashboard from './pages/admin/AdminDashboard';
+import { Toaster } from 'react-hot-toast';
+import ProtectedRoute from './ProtectedRoute';
+import UserDashboard from './pages/user/UserDashboard';
 // import ProtectedRoute from "./ProtectedRoute";
 // import ProtectedRoute from "./components/ProtectedRoute"; // import
 
@@ -30,8 +30,8 @@ function App() {
             path="/login"
             element={
               user ? (
-                <Navigate 
-                  to={user.role === "admin" ? "/admin" : "/user"}
+                <Navigate
+                  to={user.role === 'admin' ? '/admin' : '/user'}
                   replace
                 />
               ) : (
@@ -44,7 +44,7 @@ function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <ProtectedRoute allowedRoles={['admin']}>
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -52,7 +52,7 @@ function App() {
           <Route
             path="/user"
             element={
-              <ProtectedRoute allowedRoles={["user"]}>
+              <ProtectedRoute allowedRoles={['user']}>
                 <UserDashboard />
               </ProtectedRoute>
             }
@@ -64,7 +64,7 @@ function App() {
             element={
               <Navigate
                 to={
-                  user ? (user.role === "admin" ? "/admin" : "/user") : "/login"
+                  user ? (user.role === 'admin' ? '/admin' : '/user') : '/login'
                 }
                 replace
               />
