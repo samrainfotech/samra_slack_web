@@ -3,9 +3,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Channels from "./channels"
-import ChannelMessages from "./MessageBox"; //  Import messages component
-import UpdateChannel from "./UpdateChannel"; //  Import update channel component
-
 
 const UserDashboard = () => {
   const { logout } = useAuth();
