@@ -2,18 +2,16 @@ import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import CreateChannel from "./CreateChannel";
-import Channels from "./channels";
-import ChannelMessages from "./MessageBox"; 
-import UpdateChannel from "./UpdateChannel"; 
+import Channels from "./channels"
+import ChannelMessages from "./MessageBox"; //  Import messages component
+import UpdateChannel from "./UpdateChannel"; //  Import update channel component
+
 
 const UserDashboard = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
-
-  const [activeTab, setActiveTab] = useState("createChannel");
   const [activeChannel, setActiveChannel] = useState(null);
-  const [refreshFlag, setRefreshFlag] = useState(0); // 🔄 trigger channel reload
+  const [refreshFlag, setRefreshFlag] = useState(0); //  trigger channel reload
 
   const handleLogout = () => {
     logout();
@@ -21,7 +19,7 @@ const UserDashboard = () => {
     toast.success("Logged Out");
   };
 
-  // 🔄 force sidebar refresh
+  //  force sidebar refresh
   const refreshChannels = () => setRefreshFlag((prev) => prev + 1);
 
   return (
@@ -34,27 +32,12 @@ const UserDashboard = () => {
         </div>
 
         <nav className="flex-1">
-          {/* Create Channel Button */}
-          <div className="px-4 py-2">
-            <button
-              onClick={() => {
-                setActiveTab("createChannel");
-                setActiveChannel(null);
-              }}
-              className={`w-full px-4 py-2 rounded-lg font-medium transition ${
-                activeTab === "createChannel"
-                  ? "bg-indigo-600 text-white"
-                  : "hover:bg-gray-800 text-gray-300"
-              }`}
-            >
-              ➕ Create Channel
-            </button>
-          </div>
+       
 
           {/* Channels list */}
           <div className="flex-1 overflow-hidden">
             <Channels
-              key={refreshFlag} // 🔄 re-render on refresh
+              key={refreshFlag} //  re-render on refresh
               activeChannelId={activeChannel?._id}
               onSelectChannel={(ch) => {
                 setActiveChannel(ch);
@@ -74,45 +57,11 @@ const UserDashboard = () => {
             onClick={handleLogout}
             className="w-full bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold"
           >
-            🚪 Logout
+             Logout
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="mb-6">
-          {activeTab === "createChannel" && (
-            <>
-              <h1 className="text-3xl font-bold">➕ Create Channel</h1>
-              <p className="text-gray-500">
-                Add a new channel to collaborate with your team members.
-              </p>
-            </>
-          )}
-          {activeChannel && activeTab !== "createChannel" && (
-            <>
-              <h1 className="text-3xl font-bold"># {activeChannel.name}</h1>
-              <p className="text-gray-500">{activeChannel.description}</p>
-            </>
-          )}
-        </div>
-
-        <div className="bg-white rounded-2xl shadow p-6">
-          {activeTab === "createChannel" && (
-            <CreateChannel onChannelCreated={refreshChannels} />
-          )}
-          {activeTab === "channelMessages" && activeChannel && (
-            <ChannelMessages channel={activeChannel} />
-          )}
-          {activeTab === "editChannel" && activeChannel && (
-            <UpdateChannel
-              channel={activeChannel}
-              onChannelUpdated={refreshChannels}
-            />
-          )}
-        </div>
-      </main>
     </div>
   );
 };

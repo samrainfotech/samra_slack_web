@@ -21,7 +21,7 @@ export default function EditChannel({ channel, onClose, onUpdated, onDeleted }) 
   const [allUsers, setAllUsers] = useState([]);
   const [creator, setCreator] = useState(null);
 
-  // ✅ Fetch all users (exclude creator from dropdown)
+  //  Fetch all users (exclude creator from dropdown)
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -42,13 +42,13 @@ export default function EditChannel({ channel, onClose, onUpdated, onDeleted }) 
     fetchUsers();
   }, [BACKEND_URL, user?.token, channel?.createdBy]);
 
-  // ✅ Options for react-select
+  //  Options for react-select
   const userOptions = allUsers.map((u) => ({
     value: u._id,
     label: `${u.username} (${u.email})`,
   }));
 
-  // ✅ Preselect members
+  //  Preselect members
   const selectedMembers = form.members
     .map((id) => {
       const found = allUsers.find((u) => u._id === id);
@@ -58,7 +58,7 @@ export default function EditChannel({ channel, onClose, onUpdated, onDeleted }) 
     })
     .filter(Boolean);
 
-  // ✅ Handle dropdown change
+  //  Handle dropdown change
   const handleMemberChange = (selected) => {
     setForm((prev) => ({
       ...prev,
@@ -66,13 +66,13 @@ export default function EditChannel({ channel, onClose, onUpdated, onDeleted }) 
     }));
   };
 
-  // ✅ Handle text/select inputs
+  //  Handle text/select inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Submit update
+  // Submit update
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) {
@@ -105,7 +105,7 @@ export default function EditChannel({ channel, onClose, onUpdated, onDeleted }) 
     }
   };
 
-  // ✅ Delete channel
+  //  Delete channel
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this channel?")) return;
 
@@ -115,7 +115,7 @@ export default function EditChannel({ channel, onClose, onUpdated, onDeleted }) 
         headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
       });
 
-      toast.success("Channel deleted successfully 🗑️");
+      toast.success("Channel deleted successfully");
       onDeleted && onDeleted(channel._id);
       onClose && onClose();
     } catch (err) {
@@ -129,7 +129,7 @@ export default function EditChannel({ channel, onClose, onUpdated, onDeleted }) 
   return (
     <div className="max-w-lg mx-auto">
       <h1 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 text-center">
-        ✏️ Edit Channel
+         Edit Channel
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -175,8 +175,8 @@ export default function EditChannel({ channel, onClose, onUpdated, onDeleted }) 
             onChange={handleChange}
             className="p-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
           >
-            <option value="public">🌍 Public</option>
-            <option value="private">🔒 Private</option>
+            <option value="public"> Public</option>
+            <option value="private"> Private</option>
           </select>
         </div>
 
