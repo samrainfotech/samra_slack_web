@@ -30,8 +30,8 @@ function App() {
             path="/login"
             element={
               user ? (
-                <Navigate
-                  to={user.role === 'admin' ? '/admin' : '/user'}
+                <Navigate 
+                  to={user.role === "admin" ? "/admin" : "/user"
                   replace
                 />
               ) : (

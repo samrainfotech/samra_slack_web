@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import Channels from './channels';
-import ChannelMessages from './MessageBox'; // ✅ Import messages component
-import UpdateChannel from './UpdateChannel'; // ✅ Import update channel component
+
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import Channels from "./channels"
+import ChannelMessages from "./MessageBox"; //  Import messages component
+import UpdateChannel from "./UpdateChannel"; //  Import update channel component
 
 const UserDashboard = () => {
   const { logout } = useAuth();
@@ -14,9 +15,9 @@ const UserDashboard = () => {
 
   const handleLogout = () => {
     logout();
+
     navigate('/');
     toast.success('Logged Out');
-  };
 
   //  force sidebar refresh
   const refreshChannels = () => setRefreshFlag((prev) => prev + 1);
@@ -31,6 +32,7 @@ const UserDashboard = () => {
         </div>
 
         <nav className="flex-1">
+
           {/* Channels list */}
           <div className="flex-1 overflow-hidden">
             <Channels
@@ -38,11 +40,13 @@ const UserDashboard = () => {
               activeChannelId={activeChannel?._id}
               onSelectChannel={(ch) => {
                 setActiveChannel(ch);
+
                 setActiveTab('channelMessages');
               }}
               onEditChannel={(ch) => {
                 setActiveChannel(ch);
                 setActiveTab('editChannel');
+
               }}
             />
           </div>
@@ -58,8 +62,10 @@ const UserDashboard = () => {
           </button>
         </div>
       </aside>
+
     </div>
   );
 };
+
 
 export default UserDashboard;
