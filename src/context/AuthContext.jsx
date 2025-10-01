@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }) => {
               role: "admin",
               username: credentials.username,
               token: data?.accessToken,
+              id: data.user.id,
             }
           : {
               role: "user",

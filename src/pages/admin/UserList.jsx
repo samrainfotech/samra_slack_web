@@ -9,7 +9,7 @@ export default function UserList() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ username: "", email: "", password: "" });
+  const [form, setForm] = useState({ username: "", email: "", password: "", team: "" });
 
   const authHeader = useMemo(
     () => (user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
@@ -37,27 +37,52 @@ export default function UserList() {
 
   const startEdit = (u) => {
     setEditingId(u._id || u.id);
-    setForm({ username: u.username || "", email: u.email || "", password: "" });
+    setForm({
+      username: u.username || "",
+      email: u.email || "",
+      password: "",
+      team: u.team || "",
+    });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setForm({ username: "", email: "", password: "" });
+    setForm({ username: "", email: "", password: "", team: "" });
   };
 
   const saveEdit = async () => {
     try {
       setLoading(true);
-      const payload = { username: form.username, email: form.email };
+      const payload = {
+        username: form.username,
+        email: form.email,
+        team: form.team,
+      };
       if (form.password) payload.password = form.password;
       await axios.put(`${BACKEND_URL}/users/${editingId}`, payload, {
         headers: { "Content-Type": "application/json", ...authHeader },
       });
-      toast.success("User updated successfully ✅");
+      toast.success("User updated successfully");
       cancelEdit();
       fetchUsers();
     } catch (e) {
       toast.error(e?.response?.data?.message || "Update failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteUser = async (id) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+    try {
+      setLoading(true);
+      await axios.delete(`${BACKEND_URL}/users/${id}`, {
+        headers: authHeader,
+      });
+      toast.success("User deleted successfully");
+      fetchUsers();
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Delete failed");
     } finally {
       setLoading(false);
     }
@@ -71,6 +96,7 @@ export default function UserList() {
             <th className="p-3 text-left">Username</th>
             <th className="p-3 text-left">Email</th>
             <th className="p-3 text-left">Password</th>
+            <th className="p-3 text-left">Team</th>
             <th className="p-3 text-left">Actions</th>
           </tr>
         </thead>
@@ -83,6 +109,7 @@ export default function UserList() {
                 key={id}
                 className="border-b hover:bg-gray-50 transition-colors"
               >
+                {/* Username */}
                 <td className="p-3">
                   {isEditing ? (
                     <input
@@ -96,6 +123,8 @@ export default function UserList() {
                     u.username
                   )}
                 </td>
+
+                {/* Email */}
                 <td className="p-3">
                   {isEditing ? (
                     <input
@@ -109,6 +138,8 @@ export default function UserList() {
                     u.email
                   )}
                 </td>
+
+                {/* Password */}
                 <td className="p-3">
                   {isEditing ? (
                     <input
@@ -124,6 +155,27 @@ export default function UserList() {
                     <span className="text-gray-400">••••••••</span>
                   )}
                 </td>
+
+                {/* Team */}
+                <td className="p-3">
+                  {isEditing ? (
+                    <select
+                      className="p-2 border rounded w-full"
+                      value={form.team}
+                      onChange={(e) => setForm({ ...form, team: e.target.value })}
+                    >
+                      <option value="">Select team</option>
+                      <option value="IT">IT</option>
+                      <option value="Sales">Sales</option>
+                      <option value="Marketing">Marketing</option>
+                      <option value="Manager">Manager</option>
+                    </select>
+                  ) : (
+                    <span>{u.team || "-"}</span>
+                  )}
+                </td>
+
+                {/* Actions */}
                 <td className="p-3 space-x-2">
                   {isEditing ? (
                     <>
@@ -142,13 +194,22 @@ export default function UserList() {
                       </button>
                     </>
                   ) : (
-                    <button
-                      onClick={() => startEdit(u)}
-                      disabled={loading}
-                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded"
-                    >
-                      Edit
-                    </button>
+                    <>
+                      <button
+                        onClick={() => startEdit(u)}
+                        disabled={loading}
+                        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteUser(id)}
+                        disabled={loading}
+                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </>
                   )}
                 </td>
               </tr>
@@ -156,8 +217,8 @@ export default function UserList() {
           })}
           {users?.length === 0 && (
             <tr>
-              <td colSpan={4} className="p-6 text-center text-gray-500">
-                No users found 🚫
+              <td colSpan={5} className="p-6 text-center text-gray-500">
+                No users found
               </td>
             </tr>
           )}

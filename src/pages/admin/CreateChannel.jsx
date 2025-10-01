@@ -14,11 +14,12 @@ export default function CreateChannel({ onChannelCreated }) {
     name: "",
     description: "",
     members: [],
+    type: "channel", // default channel type
   });
   const [loading, setLoading] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
 
-  // ✅ Fetch all users (except creator)
+  //  Fetch all users (except creator)
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -37,7 +38,7 @@ export default function CreateChannel({ onChannelCreated }) {
   // Options for react-select
   const userOptions = allUsers.map((u) => ({
     value: u._id,
-    label: `${u.username} (${u.email})`,
+    label: `${u.username} (${u.team})`,
   }));
 
   const handleMemberChange = (selected) => {
@@ -55,18 +56,20 @@ export default function CreateChannel({ onChannelCreated }) {
       const payload = {
         name: form.name,
         description: form.description,
-        createdBy: user?._id,
-        members: [...new Set([user?._id, ...form.members])],
+        createdBy: user?.id,
+        members: form.members,
+        type: form.type, // include type
       };
+      console.log("Creating channel with payload:", payload);
 
       const res = await axios.post(`${BACKEND_URL}/channels`, payload, {
         headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
       });
 
-      setForm({ name: "", description: "", members: [] });
+      setForm({ name: "", description: "", members: [], type: "channel" });
       toast.success("Channel created successfully 🎉");
 
-      // 🔄 trigger refresh in parent
+      //  trigger refresh in parent
       onChannelCreated && onChannelCreated(res.data);
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to create channel");
@@ -116,6 +119,19 @@ export default function CreateChannel({ onChannelCreated }) {
             onChange={handleMemberChange}
             placeholder="Select members..."
           />
+        </div>
+
+        {/* Channel Type */}
+        <div>
+          <label className="block font-semibold mb-1">Channel Type</label>
+          <select
+            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+            value={form.type}
+            onChange={(e) => setForm({ ...form, type: e.target.value })}
+          >
+            <option value="channel">🌍 Public</option>
+            <option value="private">🔒 Private</option>
+          </select>
         </div>
 
         {/* Submit */}

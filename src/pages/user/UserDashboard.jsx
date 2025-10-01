@@ -1,8 +1,18 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Channels from './channels';
+=======
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import Channels from "./channels";
+import ChannelMessages from "./MessageBox"; //  Import messages component
+import UpdateChannel from "./UpdateChannel"; //  Import update channel component
+>>>>>>> ae573fb (commit by amrit)
 
 const UserDashboard = () => {
   const { logout } = useAuth();
@@ -29,6 +39,11 @@ const UserDashboard = () => {
         </div>
 
         <nav className="flex-1">
+<<<<<<< HEAD
+=======
+       
+
+>>>>>>> ae573fb (commit by amrit)
           {/* Channels list */}
           <div className="flex-1 overflow-hidden">
             <Channels
@@ -52,10 +67,18 @@ const UserDashboard = () => {
             onClick={handleLogout}
             className="w-full bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold"
           >
+<<<<<<< HEAD
             Logout
           </button>
         </div>
       </aside>
+=======
+             Logout
+          </button>
+        </div>
+      </aside>
+
+>>>>>>> ae573fb (commit by amrit)
     </div>
   );
 };

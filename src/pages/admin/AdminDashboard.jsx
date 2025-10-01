@@ -4,7 +4,16 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import AddEmployee from "./AddEmployee";
 import UserList from "./UserList";
-import { FiUsers, FiUserPlus, FiLogOut, FiMenu } from "react-icons/fi";
+import CreateChannel from "./CreateChannel";
+import ChannelList from "./ChannelList"; // ⬅ Import channel list
+import {
+  FiUsers,
+  FiUserPlus,
+  FiLogOut,
+  FiMenu,
+  FiPlusSquare,
+  FiList,
+} from "react-icons/fi";
 
 const AdminDashboard = () => {
   const { logout } = useAuth();
@@ -32,6 +41,7 @@ const AdminDashboard = () => {
           <p className="text-sm text-gray-400">Slack Management</p>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2">
+          {/* User List */}
           <button
             onClick={() => {
               setActiveTab("users");
@@ -45,6 +55,8 @@ const AdminDashboard = () => {
           >
             <FiUsers /> User List
           </button>
+
+          {/* Add Employee */}
           <button
             onClick={() => {
               setActiveTab("add");
@@ -57,6 +69,36 @@ const AdminDashboard = () => {
             }`}
           >
             <FiUserPlus /> Add Employee
+          </button>
+
+          {/* Create Channel */}
+          <button
+            onClick={() => {
+              setActiveTab("channel");
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition ${
+              activeTab === "channel"
+                ? "bg-indigo-600 text-white"
+                : "hover:bg-gray-800 text-gray-300"
+            }`}
+          >
+            <FiPlusSquare /> Create Channel
+          </button>
+
+          {/* Channel List */}
+          <button
+            onClick={() => {
+              setActiveTab("channellist");
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition ${
+              activeTab === "channellist"
+                ? "bg-indigo-600 text-white"
+                : "hover:bg-gray-800 text-gray-300"
+            }`}
+          >
+            <FiList /> Channel List
           </button>
         </nav>
 
@@ -83,7 +125,13 @@ const AdminDashboard = () => {
       <main className="flex-1 p-6 md:p-10 overflow-y-auto">
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            {activeTab === "users" ? "👥 All Users" : "➕ Add Employee"}
+            {activeTab === "users"
+              ? " All Users"
+              : activeTab === "add"
+              ? " Add Employee"
+              : activeTab === "channel"
+              ? " Create Channel"
+              : " Channel List"}
           </h1>
           <p className="text-gray-500">
             Manage your Slack-like workspace efficiently
@@ -91,7 +139,10 @@ const AdminDashboard = () => {
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          {activeTab === "users" ? <UserList /> : <AddEmployee />}
+          {activeTab === "users" && <UserList />}
+          {activeTab === "add" && <AddEmployee />}
+          {activeTab === "channel" && <CreateChannel />}
+          {activeTab === "channellist" && <ChannelList />}
         </div>
       </main>
     </div>

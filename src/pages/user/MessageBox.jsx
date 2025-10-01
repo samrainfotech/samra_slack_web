@@ -11,12 +11,12 @@ export default function ChannelMessages({ channel }) {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef(null);
 
-  // ✅ Auto-scroll to bottom on new messages
+  //  Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ✅ Fetch messages for this channel
+  //  Fetch messages for this channel
   useEffect(() => {
     if (!channel?._id) return;
 
@@ -34,7 +34,7 @@ export default function ChannelMessages({ channel }) {
     fetchMessages();
   }, [channel?._id, BACKEND_URL, user?.token]);
 
-  // ✅ Send a new message
+  //  Send a new message
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
 
@@ -67,7 +67,7 @@ export default function ChannelMessages({ channel }) {
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">
         {messages.length === 0 ? (
-          <p className="text-gray-400 text-center mt-10">No messages yet. Start the conversation 🚀</p>
+          <p className="text-gray-400 text-center mt-10">No messages yet. Start the conversation </p>
         ) : (
           messages.map((msg, idx) => (
             <div
