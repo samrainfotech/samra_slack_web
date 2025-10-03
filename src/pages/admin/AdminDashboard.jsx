@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import AddEmployee from "./AddEmployee";
 import UserList from "./UserList";
 import CreateChannel from "./CreateChannel";
-import ChannelList from "./ChannelList"; // ⬅ Import channel list
+import ChannelList from "./ChannelList";
 import {
   FiUsers,
   FiUserPlus,
@@ -13,6 +13,7 @@ import {
   FiMenu,
   FiPlusSquare,
   FiList,
+  FiX,
 } from "react-icons/fi";
 
 const AdminDashboard = () => {
@@ -28,20 +29,38 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 font-['Montserrat']">
+    <div className="flex h-screen bg-gray-100 font-['Montserrat'] overflow-hidden">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-10 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* Sidebar */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 transform ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 transition-transform duration-300
-        w-64 bg-[#1d1f23] text-white shadow-xl z-20 flex flex-col`}
+        className={`fixed md:static inset-y-0 left-0 transform 
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+          md:translate-x-0 transition-transform duration-300
+          w-full md:w-64 bg-[#1d1f23] text-white shadow-xl z-20 flex flex-col`}
       >
-        <div className="p-6 border-b border-gray-700">
-          <h2 className="text-xl font-bold">⚡ Admin Panel</h2>
-          <p className="text-sm text-gray-400">Slack Management</p>
+        <div className="p-6 border-b border-gray-700 flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-bold">⚡ Admin Panel</h2>
+            <p className="text-sm text-gray-400">Slack Management</p>
+          </div>
+          {/* Close button for mobile */}
+          <button
+            className="md:hidden text-gray-400 hover:text-white"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <FiX size={22} />
+          </button>
         </div>
+
+        {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-2">
-          {/* User List */}
           <button
             onClick={() => {
               setActiveTab("users");
@@ -56,7 +75,6 @@ const AdminDashboard = () => {
             <FiUsers /> User List
           </button>
 
-          {/* Add Employee */}
           <button
             onClick={() => {
               setActiveTab("add");
@@ -71,7 +89,6 @@ const AdminDashboard = () => {
             <FiUserPlus /> Add Employee
           </button>
 
-          {/* Create Channel */}
           <button
             onClick={() => {
               setActiveTab("channel");
@@ -86,7 +103,6 @@ const AdminDashboard = () => {
             <FiPlusSquare /> Create Channel
           </button>
 
-          {/* Channel List */}
           <button
             onClick={() => {
               setActiveTab("channellist");
@@ -102,7 +118,7 @@ const AdminDashboard = () => {
           </button>
         </nav>
 
-        {/* Logout at bottom */}
+        {/* Logout */}
         <div className="p-4 border-t border-gray-700">
           <button
             onClick={handleLogout}
@@ -122,7 +138,7 @@ const AdminDashboard = () => {
       </button>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+      <main className="flex-1 p-4 md:p-10 overflow-y-auto">
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             {activeTab === "users"
