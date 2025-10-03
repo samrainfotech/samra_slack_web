@@ -1,129 +1,190 @@
-import { useState, useEffect, useRef } from 'react';
-import { AiOutlineSend } from 'react-icons/ai';
-import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { AiOutlineSend } from "react-icons/ai";
+import { FiUsers } from "react-icons/fi";
+import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
 
 export default function ChannelMessages({ channel }) {
   const { user } = useAuth();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [input, setInput] = useState("");
+  const [showUsers, setShowUsers] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // ✅ Ref for messages container
   const messagesEndRef = useRef(null);
 
-  //  Auto-scroll to bottom on new messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  //  Fetch messages for this channel
-  useEffect(() => {
-    if (!channel?._id) return;
-
-    const fetchMessages = async () => {
-      try {
-        const res = await axios.get(
-          `${BACKEND_URL}/channels/${channel._id}/messages`,
-          {
-            headers: user?.token
-              ? { Authorization: `Bearer ${user.token}` }
-              : {},
-          }
-        );
-        setMessages(res.data.messages || []);
-      } catch (err) {
-        console.error('Error fetching messages', err);
-      }
-    };
-
-    fetchMessages();
-  }, [channel?._id, BACKEND_URL, user?.token]);
-
-  //  Send a new message
-  const sendMessage = async () => {
-    if (!newMessage.trim()) return;
-
-    try {
-      const res = await axios.post(
-        `${BACKEND_URL}/channels/${channel._id}/messages`,
-        { text: newMessage },
-        {
-          headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
-        }
-      );
-
-      setMessages([...messages, res.data.message]);
-      setNewMessage('');
-    } catch (err) {
-      console.error('Error sending message', err);
+  // Scroll to bottom helper
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
 
+  // Fetch messages
+  const fetchMessages = useCallback(async () => {
+    if (!channel?._id) return;
+    try {
+      setLoading(true);
+      const res = await axios.get(
+        `${BACKEND_URL}/messages/channel/${channel._id}`,
+        {
+          headers: { Authorization: `Bearer ${user?.token}` },
+        }
+      );
+      setMessages(res.data?.messages || []);
+    } catch (err) {
+      console.error("Error fetching messages:", err.response?.data || err.message);
+      setMessages([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [channel?._id, BACKEND_URL, user?.token]);
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
+
+  // ✅ Auto scroll when messages update
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Send message
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    try {
+      const payload = { type: "text", content: input, channel: channel._id };
+      const res = await axios.post(`${BACKEND_URL}/messages`, payload, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (res.data?.data) await fetchMessages();
+      setInput("");
+    } catch (err) {
+      console.error("Error sending message:", err.response?.data || err.message);
+    }
+  };
+
+  // Format helpers
+  const formatTime = (d) =>
+    d ? new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+  const formatDate = (d) => {
+    if (!d) return "";
+    const date = new Date(d);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    if (date.toDateString() === today.toDateString()) return "Today";
+    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+    return date.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  // Group messages by date
+  const groupedMessages = messages.reduce((acc, msg) => {
+    const key = formatDate(msg.createdAt || msg.timestamp);
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(msg);
+    return acc;
+  }, {});
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Chat Header */}
-      <div className="border-b border-gray-200 pb-3 mb-3">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          # {channel.name}
-        </h2>
-        <p className="text-sm text-gray-500">
-          {channel.description || 'Start chatting...'}
-        </p>
+    <div className="flex flex-col h-full bg-white rounded-lg shadow">
+      {/* Header */}
+      <div className="p-4 border-b flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-lg">#{channel.name}</h2>
+          <button
+            onClick={() => setShowUsers(!showUsers)}
+            className="flex items-center gap-1 text-sm text-gray-600 hover:text-indigo-600"
+          >
+            <FiUsers /> {channel.members?.length || 0}
+          </button>
+        </div>
+        {channel.description && <p className="text-sm text-gray-500">{channel.description}</p>}
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-        {messages.length === 0 ? (
-          <p className="text-gray-400 text-center mt-10">
-            No messages yet. Start the conversation 🚀
-          </p>
+      {/* Users */}
+      {showUsers && (
+        <div className="p-4 border-b bg-gray-50 text-sm space-y-1">
+          {channel.members?.length ? (
+            channel.members.map((m, i) => (
+              <div key={i} className="text-gray-700">
+                • {m.username || m.email || m.name || "Unknown User"}
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-400">No members in this channel.</p>
+          )}
+        </div>
+      )}
+
+      {/* Messages */}
+      <div className="flex-1 p-4 overflow-y-auto space-y-6">
+        {loading ? (
+          <p className="text-gray-400">Loading messages...</p>
+        ) : messages.length === 0 ? (
+          <p className="text-gray-400">No messages yet. Start chatting 💬</p>
         ) : (
-          messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${
-                msg.sender?._id === user?.id ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              <div
-                className={`max-w-xs md:max-w-md px-4 py-2 rounded-2xl shadow ${
-                  msg.sender?._id === user?.id
-                    ? 'bg-indigo-600 text-white rounded-br-none'
-                    : 'bg-gray-200 text-gray-800 rounded-bl-none'
-                }`}
-              >
-                <p className="text-sm font-medium">
-                  {msg.sender?.username || 'Unknown'}
-                </p>
-                <p>{msg.text}</p>
-                <span className="text-xs opacity-70">
-                  {new Date(msg.createdAt).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+          Object.entries(groupedMessages).map(([date, msgs]) => (
+            <div key={date} className="space-y-4">
+              {/* Date divider */}
+              <div className="flex items-center justify-center">
+                <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                  {date}
                 </span>
               </div>
+              {msgs.map((msg) => {
+                const isOwn = msg.sender?._id === user?.id || msg.sender?._id === user?._id;
+                return (
+                  <div
+                    key={msg._id || msg.id}
+                    className={`flex flex-col ${isOwn ? "items-end" : "items-start"}`}
+                  >
+                    <span className="text-xs font-semibold text-gray-600 mb-1">
+                      {msg.sender?.username || msg.sender?.name || "Unknown"}
+                    </span>
+                    <div
+                      className={`max-w-xs px-4 py-2 rounded-lg shadow text-sm ${
+                        isOwn
+                          ? "bg-green-600 text-white rounded-br-none"
+                          : "bg-gray-200 text-gray-800 rounded-bl-none"
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
+                    <span className="text-[10px] text-gray-400 mt-1">
+                      {formatTime(msg.createdAt || msg.timestamp)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           ))
         )}
+        {/* 👇 Dummy div to always scroll to latest */}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="mt-4 flex items-center gap-2 border-t pt-3">
+      {/* Input */}
+      <div className="p-4 border-t flex gap-2">
         <input
           type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
           placeholder="Type a message..."
-          className="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="flex-1 border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
         <button
-          onClick={sendMessage}
-          className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition"
+          onClick={handleSend}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-1"
         >
-          <AiOutlineSend size={20} />
+          <AiOutlineSend />
         </button>
       </div>
     </div>

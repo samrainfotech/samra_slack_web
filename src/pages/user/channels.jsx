@@ -1,22 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
-import { FiHash, FiEdit2 } from "react-icons/fi";
+import { FiHash } from "react-icons/fi";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
-export default function Channels({
-  onSelectChannel,
-  activeChannelId,
-  onEditChannel,
-  onChannelsUpdate,
-}) {
+export default function Channels({ onSelectChannel, activeChannelId, onChannelsUpdate }) {
   const { user } = useAuth();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  //  Fetch channels
+  // Fetch channels
   const fetchChannels = useCallback(async () => {
     if (!user?._id) return;
 
@@ -41,18 +36,6 @@ export default function Channels({
       setLoading(false);
     }
   }, [BACKEND_URL, user?._id, user?.token, onChannelsUpdate]);
-
-  //  Handle update of a channel
-  const handleChannelUpdated = (updatedChannel) => {
-    setChannels((prev) =>
-      prev.map((ch) => (ch._id === updatedChannel._id ? updatedChannel : ch))
-    );
-  };
-
-  //  Handle deletion of a channel
-  const handleChannelDeleted = (deletedId) => {
-    setChannels((prev) => prev.filter((ch) => ch._id !== deletedId));
-  };
 
   // Load channels on mount + whenever user changes
   useEffect(() => {
@@ -80,33 +63,13 @@ export default function Channels({
           {channels.map((ch) => (
             <li
               key={ch._id}
-              className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-800 transition ${
+              className={`flex items-center px-4 py-2 cursor-pointer hover:bg-gray-800 transition ${
                 activeChannelId === ch._id ? "bg-gray-800 font-semibold" : ""
               }`}
+              onClick={() => onSelectChannel(ch)}
             >
-              {/* Channel Name */}
-              <div
-                className="flex items-center gap-2 flex-1"
-                onClick={() => onSelectChannel(ch)}
-              >
-                <FiHash className="text-gray-400" />
-                <span>{ch.name}</span>
-              </div>
-
-              {/* Edit button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditChannel &&
-                    onEditChannel(ch, {
-                      onUpdated: handleChannelUpdated,
-                      onDeleted: handleChannelDeleted,
-                    });
-                }}
-                className="text-gray-400 hover:text-indigo-400"
-              >
-                <FiEdit2 />
-              </button>
+              <FiHash className="text-gray-400 mr-2" />
+              <span>{ch.name}</span>
             </li>
           ))}
         </ul>
