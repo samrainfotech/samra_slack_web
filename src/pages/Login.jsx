@@ -12,12 +12,12 @@ export default function Login() {
   const [role, setRole] = useState("admin");
   const [form, setForm] = useState({ username: "", password: ""});
   const [loading, setLoading] = useState(false);
-  const [connectionError, setConnectionError] = useState("");
+  const [connectionError, setConnectionError] = useState('');
 
   // Auto redirect if logged in
   useEffect(() => {
-    if (user?.role === "admin") navigate("/admin", { replace: true });
-    if (user?.role === "user") navigate("/user", { replace: true });
+    if (user?.role === 'admin') navigate('/admin', { replace: true });
+    if (user?.role === 'user') navigate('/user', { replace: true });
   }, [user]);
 
   // Test backend availability
@@ -26,7 +26,7 @@ export default function Login() {
       try {
         const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
         await axios.get(`${BACKEND_URL}/health`, { timeout: 5000 });
-        setConnectionError("");
+        setConnectionError('');
       } catch {
         setConnectionError(
           `Cannot connect to backend at ${import.meta.env.VITE_BACKEND_URL}`
@@ -40,7 +40,7 @@ export default function Login() {
     setForm({ ...form, [e.target.name]: e.target.value });
     if (error || connectionError) {
       clearError();
-      setConnectionError("");
+      setConnectionError('');
     }
   };
 
@@ -56,28 +56,30 @@ export default function Login() {
     setLoading(false);
 
     if (result.success) {
-      toast.success("Login successfully");
+      toast.success('Login successfully');
       console.log(result);
+
       console.log("Login response:", result);
 
       
       navigate(role === "admin" ? "/admin" : "/user");
+
     } else {
-      toast.error(result.error || "Invalid credentials");
+      toast.error(result.error || 'Invalid credentials');
     }
   };
   const handleRoleChange = (type) => {
     setRole(type);
     setForm({ username: "", password: ""});
     clearError();
-    setConnectionError("");
+    setConnectionError('');
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-white px-4 py-6">
       <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
-          {role === "admin" ? "Admin Login" : "User Login"}
+          {role === 'admin' ? 'Admin Login' : 'User Login'}
         </h2>
 
         {connectionError && (
@@ -90,22 +92,22 @@ export default function Login() {
           <button
             type="button"
             className={`flex-1 py-3 px-4 font-medium transition-all ${
-              role === "user"
-                ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              role === 'user'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
-            onClick={() => handleRoleChange("user")}
+            onClick={() => handleRoleChange('user')}
           >
             User Login
           </button>
           <button
             type="button"
             className={`flex-1 py-3 px-4 font-medium transition-all ${
-              role === "admin"
-                ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              role === 'admin'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
-            onClick={() => handleRoleChange("admin")}
+            onClick={() => handleRoleChange('admin')}
           >
             Admin Login
           </button>
@@ -131,7 +133,9 @@ export default function Login() {
               required
               disabled={loading}
               placeholder={
-                role === "admin" ? "Enter admin username" : "Enter your username"
+                role === 'admin'
+                  ? 'Enter admin username'
+                  : 'Enter your username'
               }
             />
           </div>
@@ -157,7 +161,7 @@ export default function Login() {
             className="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition disabled:opacity-50"
             disabled={loading}
           >
-            {loading || authLoading ? "Logging in..." : `Login as ${role}`}
+            {loading || authLoading ? 'Logging in...' : `Login as ${role}`}
           </button>
         </form>
 
@@ -169,8 +173,8 @@ export default function Login() {
             <strong>Login Type:</strong> {role}
           </p>
           <p className="mt-1">
-            <strong>Status:</strong>{" "}
-            {loading || authLoading ? "Loading..." : error ? "Error" : "Ready"}
+            <strong>Status:</strong>{' '}
+            {loading || authLoading ? 'Loading...' : error ? 'Error' : 'Ready'}
           </p>
         </div>
       </div>
