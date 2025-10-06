@@ -6,7 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function ChannelMessages({ channel }) {
   const { user } = useAuth();
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; 
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");

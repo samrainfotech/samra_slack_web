@@ -14,7 +14,6 @@ export default function UpdateChannel({ channel, onUpdated, onClose }) {
     name: channel?.name || "",
     description: channel?.description || "",
     members: channel?.members?.map((m) => (typeof m === "string" ? m : m._id)) || [],
-    type: channel?.type || "channel",
   });
 
   const [loading, setLoading] = useState(false);
@@ -58,7 +57,6 @@ export default function UpdateChannel({ channel, onUpdated, onClose }) {
         name: form.name,
         description: form.description,
         members: form.members,
-        type: form.type,
       };
       console.log("Updating channel with payload:", payload);
 
@@ -119,19 +117,6 @@ export default function UpdateChannel({ channel, onUpdated, onClose }) {
               onChange={handleMemberChange}
               placeholder="Select members..."
             />
-          </div>
-
-          {/* Channel Type */}
-          <div>
-            <label className="block font-semibold mb-1">Channel Type</label>
-            <select
-              className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
-              value={form.type}
-              onChange={(e) => setForm({ ...form, type: e.target.value })}
-            >
-              <option value="channel">🌍 Public</option>
-              <option value="private">🔒 Private</option>
-            </select>
           </div>
 
           {/* Buttons */}
