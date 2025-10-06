@@ -51,6 +51,7 @@ export const AuthProvider = ({ children }) => {
               token: data?.accessToken,
               name: data?.user?.username,
               _id: data?.user?.id,
+              team: data?.user?.team ,
             };
 
       setUser(payload);

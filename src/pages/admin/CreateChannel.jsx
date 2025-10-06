@@ -14,7 +14,6 @@ export default function CreateChannel({ onChannelCreated }) {
     name: "",
     description: "",
     members: [],
-    type: "channel", // default channel type
   });
   const [loading, setLoading] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
@@ -58,7 +57,6 @@ export default function CreateChannel({ onChannelCreated }) {
         description: form.description,
         createdBy: user?.id,
         members: form.members,
-        type: form.type, // include type
       };
       console.log("Creating channel with payload:", payload);
 
@@ -66,7 +64,7 @@ export default function CreateChannel({ onChannelCreated }) {
         headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
       });
 
-      setForm({ name: "", description: "", members: [], type: "channel" });
+      setForm({ name: "", description: "", members: [] });
       toast.success("Channel created successfully 🎉");
 
       //  trigger refresh in parent
@@ -119,19 +117,6 @@ export default function CreateChannel({ onChannelCreated }) {
             onChange={handleMemberChange}
             placeholder="Select members..."
           />
-        </div>
-
-        {/* Channel Type */}
-        <div>
-          <label className="block font-semibold mb-1">Channel Type</label>
-          <select
-            className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-          >
-            <option value="channel">🌍 Public</option>
-            <option value="private">🔒 Private</option>
-          </select>
         </div>
 
         {/* Submit */}

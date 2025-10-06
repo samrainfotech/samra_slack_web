@@ -44,10 +44,6 @@ export default function Channels({ onSelectChannel, activeChannelId, onChannelsU
 
   return (
     <div className="h-full bg-gray-900 text-white w-64 flex flex-col">
-      <h2 className="text-lg font-bold px-4 py-3 border-b border-gray-700">
-        Channels
-      </h2>
-
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
           <AiOutlineLoading3Quarters className="animate-spin text-xl" />

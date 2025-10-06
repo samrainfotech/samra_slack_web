@@ -87,12 +87,12 @@ export default function ChannelList() {
                     Delete
                   </button>
                 </td>
-              </tr>
+              </tr>  
             );
           })}
           {channels?.length === 0 && (
             <tr>
-              <td colSpan={3} className="p-6 text-center text-gray-500">
+              <td colSpan={4} className="p-6 text-center text-gray-500">
                 No channels found
               </td>
             </tr>

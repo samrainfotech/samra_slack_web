@@ -166,9 +166,9 @@ export default function UserList() {
                     >
                       <option value="">Select team</option>
                       <option value="IT">IT</option>
-                      <option value="Sales">Sales</option>
-                      <option value="Marketing">Marketing</option>
-                      <option value="Manager">Manager</option>
+                      <option value="sales">Sales</option>
+                      <option value="marketing">Marketing</option>
+                      <option value="manager">Manager</option>
                     </select>
                   ) : (
                     <span>{u.team || "-"}</span>
