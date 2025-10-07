@@ -1,17 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { AiOutlineSend } from "react-icons/ai";
+import { FiPaperclip, FiX } from "react-icons/fi";
 import { FiUsers } from "react-icons/fi";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
+import { useSocket } from "../../context/SocketContext";
+import toast from "react-hot-toast";
 
 export default function ChannelMessages({ channel }) {
   const { user } = useAuth();
+  const { socket, joinChannel, leaveChannel } = useSocket();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; 
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [showUsers, setShowUsers] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   // ✅ Ref for messages container
   const messagesEndRef = useRef(null);
@@ -52,21 +58,111 @@ export default function ChannelMessages({ channel }) {
     scrollToBottom();
   }, [messages]);
 
+  // ✅ Socket real-time functionality
+  useEffect(() => {
+    if (socket && channel?._id) {
+      console.log("Setting up socket listeners for channel:", channel._id);
+      // Join channel room
+      joinChannel(channel._id);
+
+      // Listen for new messages
+      const handleNewMessage = (message) => {
+        console.log("Received new message:", message);
+        setMessages(prev => [...prev, message]);
+        // Show notification if message is not from current user
+        if (message.sender?._id !== user?.id && message.sender?._id !== user?._id) {
+          toast.success(`New message in #${channel.name}`, {
+            duration: 3000,
+            position: "top-right",
+          });
+        }
+      };
+
+      // Listen for message deletions
+      const handleMessageDeleted = ({ messageId }) => {
+        setMessages(prev => prev.filter(msg => msg._id !== messageId));
+      };
+
+      // Listen for reactions
+      const handleReactionAdded = (message) => {
+        setMessages(prev => 
+          prev.map(msg => msg._id === message._id ? message : msg)
+        );
+      };
+
+      socket.on("newMessage", handleNewMessage);
+      socket.on("messageDeleted", handleMessageDeleted);
+      socket.on("reactionAdded", handleReactionAdded);
+
+      return () => {
+        socket.off("newMessage", handleNewMessage);
+        socket.off("messageDeleted", handleMessageDeleted);
+        socket.off("reactionAdded", handleReactionAdded);
+        leaveChannel(channel._id);
+      };
+    }
+  }, [socket, channel?._id, user?.id, user?._id, joinChannel, leaveChannel]);
+
+  // Upload file to S3
+  const uploadFile = async (file) => {
+    const contentType = file.type || "application/octet-stream";
+    const extension = file.name?.split(".").pop()?.toLowerCase();
+    const { data } = await axios.get(
+      `${BACKEND_URL}/uploads/workshop-image-post`,
+      { params: { contentType, extension } }
+    );
+    const { url, fields, publicUrl } = data.data;
+    const formData = new FormData();
+    Object.entries(fields).forEach(([k, v]) => formData.append(k, v));
+    formData.append("file", file);
+    const resp = await fetch(url, { method: "POST", body: formData });
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      console.error("S3 upload error:", errorText);
+      throw new Error("File upload failed");
+    }
+    return publicUrl;
+  };
+
+  // Handle file selection
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
   // Send message
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !selectedFile) return;
     try {
-      const payload = { type: "text", content: input, channel: channel._id };
+      let content = input;
+      let type = "text";
+      
+      // Handle file upload if file is selected
+      if (selectedFile) {
+        setUploading(true);
+        const fileUrl = await uploadFile(selectedFile);
+        content = fileUrl;
+        type = "file";
+        setSelectedFile(null);
+      }
+      
+      const payload = { type, content, channel: channel._id };
       const res = await axios.post(`${BACKEND_URL}/messages`, payload, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
           "Content-Type": "application/json",
         },
       });
-      if (res.data?.data) await fetchMessages();
-      setInput("");
+      if (res.data?.data) {
+        // Don't fetch messages again - socket will handle real-time updates
+        setInput("");
+        setUploading(false);
+      }
     } catch (err) {
       console.error("Error sending message:", err.response?.data || err.message);
+      setUploading(false);
     }
   };
 
@@ -155,7 +251,24 @@ export default function ChannelMessages({ channel }) {
                           : "bg-gray-200 text-gray-800 rounded-bl-none"
                       }`}
                     >
-                      {msg.content}
+                      {msg.type === "file" ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-blue-400">
+                            <FiPaperclip className="text-sm" />
+                            <span className="text-xs">File attachment</span>
+                          </div>
+                          <a
+                            href={msg.content}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 underline text-xs break-all"
+                          >
+                            {msg.content.split('/').pop()}
+                          </a>
+                        </div>
+                      ) : (
+                        msg.content
+                      )}
                     </div>
                     <span className="text-[10px] text-gray-400 mt-1">
                       {formatTime(msg.createdAt || msg.timestamp)}
@@ -171,21 +284,52 @@ export default function ChannelMessages({ channel }) {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t flex gap-2">
-        <input
-          type="text"
-          placeholder="Type a message..."
-          className="flex-1 border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-        />
-        <button
-          onClick={handleSend}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-1"
-        >
-          <AiOutlineSend />
-        </button>
+      <div className="p-4 border-t">
+        {/* File preview */}
+        {selectedFile && (
+          <div className="mb-2 p-2 bg-gray-100 rounded-lg flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FiPaperclip className="text-gray-600" />
+              <span className="text-sm text-gray-700">{selectedFile.name}</span>
+            </div>
+            <button
+              onClick={() => setSelectedFile(null)}
+              className="text-gray-500 hover:text-red-500"
+            >
+              <FiX />
+            </button>
+          </div>
+        )}
+        
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Type a message..."
+            className="flex-1 border rounded-lg p-2 outline-none focus:ring-2 focus:ring-indigo-500"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          />
+          <input
+            type="file"
+            id="file-input"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+          <label
+            htmlFor="file-input"
+            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg flex items-center gap-1 cursor-pointer"
+          >
+            <FiPaperclip />
+          </label>
+          <button
+            onClick={handleSend}
+            disabled={uploading}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-1 disabled:opacity-50"
+          >
+            {uploading ? "..." : <AiOutlineSend />}
+          </button>
+        </div>
       </div>
     </div>
   );

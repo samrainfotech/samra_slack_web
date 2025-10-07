@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 import Login from './pages/Login';
 import { useAuth } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
 // import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from './pages/admin/AdminDashboard';
 import { Toaster } from 'react-hot-toast';
@@ -20,8 +21,9 @@ function App() {
   return (
     <div>
       <Router>
-        <Toaster />
-        <Routes>
+        <SocketProvider>
+          <Toaster />
+          <Routes>
           {/* Default: redirect root to correct dashboard or login */}
           <Route path="/" element={<Login />} />
 
@@ -70,7 +72,8 @@ function App() {
               />
             }
           />
-        </Routes>
+          </Routes>
+        </SocketProvider>
       </Router>
     </div>
   );
