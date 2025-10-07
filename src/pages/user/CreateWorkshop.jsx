@@ -14,12 +14,13 @@ export default function AddWorkshop() {
   const [form, setForm] = useState({
     location: { lat: null, lng: null },
     name: "",
-    // image: "",
+    image: null,
     ownerName: "",
     ownerPhone: "",
     address: { street: "", city: "", state: "", zip: "", country: "" },
   });
 
+  const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [markerPlaced, setMarkerPlaced] = useState(false);
@@ -67,23 +68,75 @@ export default function AddWorkshop() {
     };
   }, [showMap]);
 
+  // 🖼️ Handle image selection
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setForm((prev) => ({ ...prev, image: file }));
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  async function uploadImageIfNeeded() {
+    if (!form.image) return null;
+    const file = form.image;
+    const contentType = file.type || "image/png";
+    const extension = file.name?.split(".").pop()?.toLowerCase();
+    const { data } = await axios.get(
+      `${BACKEND_URL}/uploads/workshop-image-post`,
+      { params: { contentType, extension } }
+    );
+    const { url, fields, publicUrl } = data.data;
+    const formData = new FormData();
+    Object.entries(fields).forEach(([k, v]) => formData.append(k, v));
+    formData.append("file", file);
+    const resp = await fetch(url, { method: "POST", body: formData });
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      console.error("S3 POST error:", errorText);
+      throw new Error("S3 upload failed: " + (errorText?.slice(0, 200) || resp.status));
+    }
+    return publicUrl;
+  }
+
   // 🚀 Submit
   const submit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
-      await axios.post(`${BACKEND_URL}/workshops`, form,);
+      const imageUrl = await uploadImageIfNeeded();
+
+      await axios.post(`${BACKEND_URL}/workshops`, {
+        name: form.name,
+        ownerName: form.ownerName,
+        ownerPhone: form.ownerPhone,
+        location: { lat: form.location.lat, lng: form.location.lng },
+        address: { ...form.address },
+        image: imageUrl || null,
+      });
+
       toast.success("Workshop added successfully");
+
       setForm({
         location: { lat: null, lng: null },
         name: "",
-        // image: "",
+        image: null,
         ownerName: "",
         ownerPhone: "",
         address: { street: "", city: "", state: "", zip: "", country: "" },
       });
+      setPreview(null);
     } catch (e) {
-      toast.error(e?.response?.data?.message || "Failed to add workshop");
+      const apiMsg = e?.response?.data?.message;
+      const apiErrors = e?.response?.data?.errors;
+      if (apiErrors && Array.isArray(apiErrors) && apiErrors.length) {
+        const first = apiErrors[0];
+        toast.error(`${first.field}: ${first.message}`);
+      } else if (apiMsg) {
+        toast.error(apiMsg);
+      } else {
+        toast.error("Failed to add workshop");
+      }
     } finally {
       setLoading(false);
     }
@@ -96,7 +149,7 @@ export default function AddWorkshop() {
         Add New Workshop
       </h1>
 
-      <form onSubmit={submit} className="space-y-5">
+      <form onSubmit={submit} className="space-y-5" encType="multipart/form-data">
         {/* Workshop Name */}
         <div>
           <label className="block font-semibold mb-1 text-gray-700">
@@ -130,26 +183,25 @@ export default function AddWorkshop() {
           </div>
         </div>
 
-        {/* Image URL */}
-        {/* <div>
+        {/* 🖼️ Image Upload */}
+        <div>
           <label className="block font-semibold mb-1 text-gray-700">
-            Image URL
+            Workshop Image
           </label>
           <input
-            type="url"
-            className="p-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
-            placeholder="https://example.com/image.jpg"
-            value={form.image}
-            onChange={(e) => setForm({ ...form, image: e.target.value })}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="p-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
           />
-          {form.image && (
+          {preview && (
             <img
-              src={form.image}
+              src={preview}
               alt="Workshop Preview"
               className="mt-3 w-full max-h-64 object-cover rounded-lg shadow"
             />
           )}
-        </div> */}
+        </div>
 
         {/* Owner Info */}
         <div className="grid md:grid-cols-2 gap-4">
