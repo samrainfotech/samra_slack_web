@@ -79,7 +79,7 @@ export default function UpdateChannel({ channel, onUpdated, onClose }) {
     <div className="fixed inset-0 flex items-center justify-center bg-white/70 backdrop-blur">
       <div className="bg-white shadow-xl rounded-xl p-6 w-full max-w-lg relative">
         <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
-          ✏️ Edit Channel
+           Edit Channel
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5">

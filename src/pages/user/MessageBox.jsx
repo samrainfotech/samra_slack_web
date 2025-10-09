@@ -63,19 +63,18 @@ export default function ChannelMessages({ channel }) {
     if (socket && channel?._id) {
       console.log("Setting up socket listeners for channel:", channel._id);
       // Join channel room
-      joinChannel(channel._id);
 
       // Listen for new messages
       const handleNewMessage = (message) => {
         console.log("Received new message:", message);
         setMessages(prev => [...prev, message]);
         // Show notification if message is not from current user
-        if (message.sender?._id !== user?.id && message.sender?._id !== user?._id) {
-          toast.success(`New message in #${channel.name}`, {
-            duration: 3000,
-            position: "top-right",
-          });
-        }
+        // if (message.sender?._id !== user?.id && message.sender?._id !== user?._id) {
+        //   toast.success(`New message in #${channel.name}`, {
+        //     duration: 3000,
+        //     position: "top-right",
+        //   });
+        // }
       };
 
       // Listen for message deletions
@@ -98,7 +97,6 @@ export default function ChannelMessages({ channel }) {
         socket.off("newMessage", handleNewMessage);
         socket.off("messageDeleted", handleMessageDeleted);
         socket.off("reactionAdded", handleReactionAdded);
-        leaveChannel(channel._id);
       };
     }
   }, [socket, channel?._id, user?.id, user?._id, joinChannel, leaveChannel]);

@@ -79,7 +79,7 @@ export default function CreateChannel({ onChannelCreated }) {
   return (
     <div className="max-w-lg mx-auto">
       <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
-        ➕ Create New Channel
+        Create New Channel
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">

@@ -7,7 +7,7 @@ import { useSocket } from "../../context/SocketContext";
 import toast from "react-hot-toast";
 
 export default function UserMessageBox({ selectedUser }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { socket, joinPrivateChat, leavePrivateChat } = useSocket();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -18,183 +18,123 @@ export default function UserMessageBox({ selectedUser }) {
   const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // ------------------------
-  // Scroll to bottom
-  // ------------------------
+  // Scroll bottom
   const scrollToBottom = () => {
-    if (messagesEndRef.current)
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // ------------------------
-  // Fetch private messages between current user and selectedUser
-  // ------------------------
+  // Fetch messages
   const fetchMessages = useCallback(async () => {
-    if (!selectedUser?._id) return;
+    if (!selectedUser?._id || !user?.token) return;
     try {
       setLoading(true);
       const res = await axios.get(`${BACKEND_URL}/chat/${selectedUser._id}`, {
-        headers: { Authorization: `Bearer ${user?.token}` },
+        headers: { Authorization: `Bearer ${user.token}` },
       });
       setMessages(res.data?.messages || []);
     } catch (err) {
-      console.error("Error fetching private messages:", err);
+      if (err?.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        logout();
+      } else {
+        console.error("Error fetching private messages:", err);
+      }
     } finally {
       setLoading(false);
     }
-  }, [BACKEND_URL, selectedUser?._id, user?.token]);
+  }, [BACKEND_URL, selectedUser?._id, user?.token, logout]);
 
-  // ------------------------
-  // Fetch messages on user change
-  // ------------------------
   useEffect(() => {
     fetchMessages();
   }, [fetchMessages]);
 
-  // ------------------------
-  // Auto scroll on message updates
-  // ------------------------
+  useEffect(() => scrollToBottom(), [messages]);
+
+  // Socket listener
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!socket || !selectedUser?._id || !user?._id) return;
+    joinPrivateChat(selectedUser._id);
 
-  // ------------------------
-  // Socket real-time functionality for private messages
-  // ------------------------
-  useEffect(() => {
-    if (socket && selectedUser?._id) {
-      console.log("Setting up socket listeners for private chat with user:", selectedUser._id);
-      // Join private chat room
-      joinPrivateChat(selectedUser._id);
+    const handleNewPrivateMessage = (message) => {
+      if (!message?.sender || !message?.receiver) return;
+      const ids = [message.sender._id || message.sender, message.receiver._id || message.receiver];
+      const current = [user._id, selectedUser._id];
+      if (ids.sort().join("_") === current.sort().join("_"))
+        setMessages((prev) => [...prev, message]);
+    };
 
-      // Listen for new private messages
-      const handleNewPrivateMessage = (message) => {
-        console.log("Received new private message:", message);
-        setMessages(prev => [...prev, message]);
-        // Show notification if message is not from current user
-        if (message.sender?._id !== user?._id) {
-          toast.success(`New message from ${message.sender?.username || message.sender?.name}`, {
-            duration: 3000,
-            position: "top-right",
-          });
-        }
-      };
-
-      // Listen for message deletions
-      const handleChatMessageDeleted = ({ chatId }) => {
-        setMessages(prev => prev.filter(msg => msg._id !== chatId));
-      };
-
-      // Listen for reactions
-      const handleChatReactionAdded = (message) => {
-        setMessages(prev => 
-          prev.map(msg => msg._id === message._id ? message : msg)
-        );
-      };
-
-      socket.on("newPrivateMessage", handleNewPrivateMessage);
-      socket.on("chatMessageDeleted", handleChatMessageDeleted);
-      socket.on("chatReactionAdded", handleChatReactionAdded);
-
-      return () => {
-        socket.off("newPrivateMessage", handleNewPrivateMessage);
-        socket.off("chatMessageDeleted", handleChatMessageDeleted);
-        socket.off("chatReactionAdded", handleChatReactionAdded);
-        leavePrivateChat(selectedUser._id);
-      };
-    }
+    socket.on("newPrivateMessage", handleNewPrivateMessage);
+    return () => {
+      leavePrivateChat(selectedUser._id);
+      socket.off("newPrivateMessage", handleNewPrivateMessage);
+    };
   }, [socket, selectedUser?._id, user?._id, joinPrivateChat, leavePrivateChat]);
 
-  // Upload file to S3
+  // File upload
   const uploadFile = async (file) => {
     const contentType = file.type || "application/octet-stream";
     const extension = file.name?.split(".").pop()?.toLowerCase();
-    const { data } = await axios.get(
-      `${BACKEND_URL}/uploads/workshop-image-post`,
-      { params: { contentType, extension } }
-    );
+    const { data } = await axios.get(`${BACKEND_URL}/uploads/workshop-image-post`, {
+      params: { contentType, extension },
+    });
     const { url, fields, publicUrl } = data.data;
     const formData = new FormData();
     Object.entries(fields).forEach(([k, v]) => formData.append(k, v));
     formData.append("file", file);
     const resp = await fetch(url, { method: "POST", body: formData });
-    if (!resp.ok) {
-      const errorText = await resp.text();
-      console.error("S3 upload error:", errorText);
-      throw new Error("File upload failed");
-    }
+    if (!resp.ok) throw new Error("File upload failed");
     return publicUrl;
   };
 
-  // Handle file selection
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  // ------------------------
-  // Send message
-  // ------------------------
   const handleSend = async () => {
+    if (!user?.token) {
+      toast.error("Please login to send messages");
+      return logout();
+    }
     if ((!input.trim() && !selectedFile) || !selectedUser?._id) return;
     try {
       let content = input.trim();
       let type = "text";
-      
-      // Handle file upload if file is selected
+
       if (selectedFile) {
         setUploading(true);
-        const fileUrl = await uploadFile(selectedFile);
-        content = fileUrl;
+        content = await uploadFile(selectedFile);
         type = "file";
         setSelectedFile(null);
+        setUploading(false);
       }
 
-      const payload = {
-        receiverId: selectedUser._id, // ✅ matches backend receiver key
-        type,
-        content,
-      };
-
-      await axios.post(`${BACKEND_URL}/chat`, payload, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      await axios.post(
+        `${BACKEND_URL}/chat`,
+        { receiverId: selectedUser._id, type, content },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
 
       setInput("");
-      setUploading(false);
-      // Don't fetch messages again - socket will handle real-time updates
     } catch (err) {
-      console.error("Error sending private message:", err);
+      if (err?.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        logout();
+      } else {
+        toast.error("Failed to send message");
+      }
       setUploading(false);
     }
   };
 
-  // ------------------------
-  // Format time helper
-  // ------------------------
   const formatTime = (d) =>
     d
-      ? new Date(d).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+      ? new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "";
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow">
-      {/* Header */}
       <div className="p-4 border-b flex items-center justify-between">
-        <h2 className="font-bold text-lg flex items-center gap-2">
-          💬 Chat with {selectedUser.username || selectedUser.name || "User"}
+        <h2 className="font-bold text-lg">
+          💬 Chat with {selectedUser?.username || selectedUser?.name || "User"}
         </h2>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 p-4 overflow-y-auto space-y-4">
         {loading ? (
           <p className="text-gray-400">Loading messages...</p>
@@ -230,7 +170,7 @@ export default function UserMessageBox({ selectedUser }) {
                         rel="noopener noreferrer"
                         className="text-blue-400 hover:text-blue-300 underline text-xs break-all"
                       >
-                        {msg.content.split('/').pop()}
+                        {msg.content.split("/").pop()}
                       </a>
                     </div>
                   ) : (
@@ -247,9 +187,7 @@ export default function UserMessageBox({ selectedUser }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <div className="p-4 border-t">
-        {/* File preview */}
         {selectedFile && (
           <div className="mb-2 p-2 bg-gray-100 rounded-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -264,7 +202,7 @@ export default function UserMessageBox({ selectedUser }) {
             </button>
           </div>
         )}
-        
+
         <div className="flex gap-2">
           <input
             type="text"
@@ -278,7 +216,7 @@ export default function UserMessageBox({ selectedUser }) {
             type="file"
             id="file-input-private"
             className="hidden"
-            onChange={handleFileSelect}
+            onChange={(e) => setSelectedFile(e.target.files[0])}
           />
           <label
             htmlFor="file-input-private"

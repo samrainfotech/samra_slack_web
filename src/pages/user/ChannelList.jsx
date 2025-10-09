@@ -1,17 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
+import { useSocket } from "../../context/SocketContext";
 import { FiHash } from "react-icons/fi";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 export default function Channels({ onSelectChannel, activeChannelId, onChannelsUpdate }) {
   const { user } = useAuth();
+  const { joinChannel, leaveChannel } = useSocket();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch channels
   const fetchChannels = useCallback(async () => {
     if (!user?._id) return;
 
@@ -29,17 +30,24 @@ export default function Channels({ onSelectChannel, activeChannelId, onChannelsU
 
       setChannels(userChannels);
       onChannelsUpdate && onChannelsUpdate(userChannels);
+      console.log("Fetched channels:", userChannels);
+      // ✅ Join all user's channels on connect
+      userChannels.forEach((ch) => joinChannel(ch._id));
     } catch (e) {
       console.error("Error fetching channels", e);
       setChannels([]);
     } finally {
       setLoading(false);
     }
-  }, [BACKEND_URL, user?._id, user?.token, onChannelsUpdate]);
+  }, [BACKEND_URL, user?._id, user?.token, onChannelsUpdate, joinChannel]);
 
-  // Load channels on mount + whenever user changes
   useEffect(() => {
     fetchChannels();
+
+    // ✅ Cleanup: leave channels when unmounting
+    return () => {
+      channels.forEach((ch) => leaveChannel(ch._id));
+    };
   }, [fetchChannels]);
 
   return (
