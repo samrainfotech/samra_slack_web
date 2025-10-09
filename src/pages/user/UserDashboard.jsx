@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import Channels from "./Channels";
+import Channels from "./ChannelList";
 import ChannelMessages from "./MessageBox";
 import UserMessageBox from "./UserMessageBox";
 import Workshop from "./CreateWorkshop";
+import Navbar from "../../components/Navbar"; 
+import { useSocket } from "../../context/SocketContext";
 import { FiMenu, FiX, FiPlusCircle, FiMessageCircle } from "react-icons/fi";
 import axios from "axios";
 
@@ -13,6 +15,8 @@ const UserDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+  const { notifications, setNotifications, joinPrivateChat } = useSocket();
+
 
   const [activeChannel, setActiveChannel] = useState(null);
   const [activePrivate, setActivePrivate] = useState(null);
@@ -47,26 +51,31 @@ const UserDashboard = () => {
           headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
         });
         const allUsers = res.data?.users || res.data?.data || [];
-        console.log("Fetched users:", allUsers);
-
         setUsers(allUsers.filter((u) => u._id !== user?._id));
+        allUsers.forEach((u => joinPrivateChat(u._id))); 
       } catch (err) {
-        console.error(" Error fetching users:", err);
+        console.error("Error fetching users:", err);
       }
     };
-
     if (user?._id) fetchUsers();
   }, [BACKEND_URL, user?._id, user?.token]);
-
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-screen bg-gray-100 overflow-hidden relative">
+      {/* ✅ Top Navbar */}
+      <Navbar
+  onMenuClick={() => setSidebarOpen(true)}
+  sidebarOpen={sidebarOpen}
+  notifications={notifications}
+  setNotifications={setNotifications}
+/>
+
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 transform 
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-          w-64 bg-gray-900 text-white flex flex-col z-40 
-          transition-transform duration-300 ease-in-out 
-          md:relative md:translate-x-0`}
+    ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+    w-1/2 md:w-64 bg-gray-900 text-white flex flex-col z-40 
+    transition-transform duration-300 ease-in-out 
+    md:relative md:translate-x-0`}
       >
         {/* Header */}
         <div className="p-6 border-b border-gray-800 flex justify-between items-center">
@@ -83,11 +92,11 @@ const UserDashboard = () => {
         </div>
 
         {/* Channels Section */}
-        <div className="flex-1 overflow-y-auto border-b border-gray-800">
+        <div className="flex-1 border-b border-gray-800">
           <h3 className="px-4 pt-3 pb-2 text-gray-400 text-xs uppercase font-semibold tracking-wide">
             Channels
           </h3>
-          <div className="max-h-56 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+          <div className="max-h-56 overflow-y-auto hide-scrollbar">
             <Channels
               key={refreshFlag}
               activeChannelId={activeChannel?._id}
@@ -102,12 +111,12 @@ const UserDashboard = () => {
         </div>
 
         {/* Private Chats Section */}
-        <div className="flex-1 overflow-y-auto border-b border-gray-800">
+        <div className="flex-1 border-b border-gray-800">
           <h3 className="px-4 pt-3 pb-2 text-gray-400 text-xs uppercase font-semibold tracking-wide flex items-center gap-2">
             <FiMessageCircle size={14} />
             Private Chats
           </h3>
-          <div className="max-h-56 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+          <div className="max-h-56 overflow-y-auto hide-scrollbar">
             {users.length > 0 ? (
               users.map((u) => (
                 <button
@@ -160,19 +169,7 @@ const UserDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col relative">
-        {/* Mobile Top Bar */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white shadow">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-gray-700 hover:text-gray-900"
-          >
-            <FiMenu size={24} />
-          </button>
-          <h2 className="font-bold text-lg">Slack Workspace</h2>
-        </div>
-
-        {/* Main View */}
+      <div className="flex-1 flex flex-col relative pt-16 md:pt-20">
         <main className="flex-1 p-4 md:p-6 overflow-y-auto">
           {showWorkshop ? (
             <Workshop />

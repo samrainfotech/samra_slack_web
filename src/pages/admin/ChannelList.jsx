@@ -53,6 +53,9 @@ export default function ChannelList() {
 
   return (
     <div className="overflow-x-auto">
+       <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
+           Channel List
+        </h1>
       <table className="min-w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm">
         <thead className="bg-gray-100 text-gray-700">
           <tr>
