@@ -6,10 +6,10 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (loading) return <div>Loading...</div>;
 
-  // ❌ No token → redirect
+  //  No token → redirect
   if (!user || !user.token) return <Navigate to="/login" replace />;
 
-  // 🚫 Role mismatch
+  //  Role mismatch
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     const redirectPath = user.role === "admin" ? "/admin" : "/user";
     return <Navigate to={redirectPath} replace />;

@@ -19,7 +19,7 @@ export default function ChannelMessages({ channel }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  // ✅ Ref for messages container
+  // Ref for messages container
   const messagesEndRef = useRef(null);
 
   // Scroll to bottom helper
@@ -53,12 +53,12 @@ export default function ChannelMessages({ channel }) {
     fetchMessages();
   }, [fetchMessages]);
 
-  // ✅ Auto scroll when messages update
+  // Auto scroll when messages update
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // ✅ Socket real-time functionality
+  // Socket real-time functionality
   useEffect(() => {
     if (socket && channel?._id) {
       console.log("Setting up socket listeners for channel:", channel._id);
@@ -277,7 +277,7 @@ export default function ChannelMessages({ channel }) {
             </div>
           ))
         )}
-        {/* 👇 Dummy div to always scroll to latest */}
+        {/* Dummy div to always scroll to latest */}
         <div ref={messagesEndRef} />
       </div>
 

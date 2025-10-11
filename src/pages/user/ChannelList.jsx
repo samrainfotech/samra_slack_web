@@ -31,7 +31,7 @@ export default function Channels({ onSelectChannel, activeChannelId, onChannelsU
       setChannels(userChannels);
       onChannelsUpdate && onChannelsUpdate(userChannels);
       console.log("Fetched channels:", userChannels);
-      // ✅ Join all user's channels on connect
+      //  Join all user's channels on connect
       userChannels.forEach((ch) => joinChannel(ch._id));
     } catch (e) {
       console.error("Error fetching channels", e);
@@ -44,7 +44,7 @@ export default function Channels({ onSelectChannel, activeChannelId, onChannelsU
   useEffect(() => {
     fetchChannels();
 
-    // ✅ Cleanup: leave channels when unmounting
+    //  Cleanup: leave channels when unmounting
     return () => {
       channels.forEach((ch) => leaveChannel(ch._id));
     };

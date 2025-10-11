@@ -27,7 +27,7 @@ export default function AddWorkshop() {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
 
-  // 🗺️ Initialize Leaflet Map
+  // Initialize Leaflet Map
   useEffect(() => {
     if (showMap && !mapRef.current) {
       const map = L.map("map-container").setView([20.5937, 78.9629], 5);
@@ -68,7 +68,7 @@ export default function AddWorkshop() {
     };
   }, [showMap]);
 
-  // 🖼️ Handle image selection
+  // Handle image selection
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -99,7 +99,7 @@ export default function AddWorkshop() {
     return publicUrl;
   }
 
-  // 🚀 Submit
+  // Submit
   const submit = async (e) => {
     e.preventDefault();
     try {
@@ -142,7 +142,7 @@ export default function AddWorkshop() {
     }
   };
 
-  // 🧱 Render
+  // Render
   return (
     <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-6">
       <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
@@ -175,7 +175,7 @@ export default function AddWorkshop() {
           >
             {form.location.lat && form.location.lng ? (
               <span>
-                📍 {form.location.lat.toFixed(4)}, {form.location.lng.toFixed(4)}
+                 {form.location.lat.toFixed(4)}, {form.location.lng.toFixed(4)}
               </span>
             ) : (
               <span className="text-gray-400">Select Location</span>
@@ -183,7 +183,7 @@ export default function AddWorkshop() {
           </div>
         </div>
 
-        {/* 🖼️ Image Upload */}
+        {/* Image Upload */}
         <div>
           <label className="block font-semibold mb-1 text-gray-700">
             Workshop Image
@@ -276,7 +276,7 @@ export default function AddWorkshop() {
         </button>
       </form>
 
-      {/* 🌍 Map Modal */}
+      {/* Map Modal */}
       {showMap && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-[95%] h-[85%] shadow-lg flex flex-col overflow-hidden">

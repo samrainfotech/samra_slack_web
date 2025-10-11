@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
 
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-  // ✅ Hydrate from localStorage
+  // Hydrate from localStorage
   useEffect(() => {
     const stored = localStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
@@ -68,20 +68,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Logout (clears user + redirects)
+  // Logout (clears user + redirects)
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
     navigate("/login");
   };
 
-  // ✅ Axios interceptor to catch token expiry
+  // Axios interceptor to catch token expiry
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (res) => res,
       (err) => {
         if (err?.response?.status === 401) {
-          console.warn("⏰ Token expired — logging out");
+          console.warn("Token expired — logging out");
           logout();
         }
         return Promise.reject(err);
