@@ -18,7 +18,7 @@ function App() {
     <SocketProvider>
       <Toaster />
       <Routes>
-        {/* 🏠 Default root → redirect */}
+        {/*  Default root → redirect */}
         <Route
           path="/"
           element={
@@ -33,7 +33,7 @@ function App() {
           }
         />
 
-        {/* 🔑 Login route */}
+        {/*  Login route */}
         <Route
           path="/login"
           element={
@@ -48,7 +48,7 @@ function App() {
           }
         />
 
-        {/* 🧭 Protected dashboards */}
+        {/* Protected dashboards */}
         <Route
           path="/admin"
           element={
@@ -66,7 +66,7 @@ function App() {
           }
         />
 
-        {/* ❌ Catch-all */}
+        {/*  Catch-all */}
         <Route
           path="*"
           element={

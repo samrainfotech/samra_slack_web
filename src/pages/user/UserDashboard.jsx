@@ -61,7 +61,7 @@ const UserDashboard = () => {
   }, [BACKEND_URL, user?._id, user?.token]);
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden relative">
-      {/* ✅ Top Navbar */}
+      {/*  Top Navbar */}
       <Navbar
   onMenuClick={() => setSidebarOpen(true)}
   sidebarOpen={sidebarOpen}

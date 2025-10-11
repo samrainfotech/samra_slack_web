@@ -64,7 +64,7 @@ export default function UpdateChannel({ channel, onUpdated, onClose }) {
         headers: user?.token ? { Authorization: `Bearer ${user.token}` } : {},
       });
 
-      toast.success("Channel updated successfully ✅");
+      toast.success("Channel updated successfully ");
       onUpdated && onUpdated(res.data);
       onClose && onClose();
     } catch (err) {

@@ -30,13 +30,13 @@ const AdminDashboard = () => {
 
   return (
     <div className="h-screen bg-gray-100 font-['Montserrat'] overflow-hidden">
-      {/* ✅ Top Navbar */}
+      {/* Top Navbar */}
       <Navbar
         onMenuClick={() => setSidebarOpen(true)}
         sidebarOpen={sidebarOpen}
       />
 
-      {/* ✅ Sidebar + Main layout */}
+      {/* Sidebar + Main layout */}
       <div className="flex h-full">
         {/* Mobile Overlay */}
         {sidebarOpen && (
@@ -100,7 +100,7 @@ const AdminDashboard = () => {
           </div>
         </aside>
 
-        {/* ✅ Main Content */}
+        {/* Main Content */}
        <main
           className={`flex-1 transition-all duration-300 px-4 md:px-10 pt-24 md:pt-20`}
         >
