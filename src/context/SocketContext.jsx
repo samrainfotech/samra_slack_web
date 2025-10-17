@@ -39,7 +39,7 @@ export const SocketProvider = ({ children }) => {
     if (!user?.token || !user?._id) return;
 
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-    const socketUrl = BACKEND_URL.replace("/\/api$/", "");
+    const socketUrl = BACKEND_URL.replace(".com/api", ".com");
 
     const newSocket = io(socketUrl, {
       auth: { token: user.token },
