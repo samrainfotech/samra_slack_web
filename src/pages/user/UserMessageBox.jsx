@@ -160,18 +160,7 @@ export default function UserMessageBox({ selectedUser }) {
                 >
                   {msg.type === "file" ? (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-blue-400">
-                        <FiPaperclip className="text-sm" />
-                        <span className="text-xs">File attachment</span>
-                      </div>
-                      <a
-                        href={msg.content}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-300 underline text-xs break-all"
-                      >
-                        {msg.content.split("/").pop()}
-                      </a>
+                      <img src={msg.content} alt="" srcset="" />
                     </div>
                   ) : (
                     msg.content
