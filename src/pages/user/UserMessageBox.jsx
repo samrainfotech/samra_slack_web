@@ -18,12 +18,12 @@ export default function UserMessageBox({ selectedUser }) {
   const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Scroll bottom
+  // Auto-scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Fetch messages
+  // Fetch existing messages
   const fetchMessages = useCallback(async () => {
     if (!selectedUser?._id || !user?.token) return;
     try {
@@ -50,48 +50,69 @@ export default function UserMessageBox({ selectedUser }) {
 
   useEffect(() => scrollToBottom(), [messages]);
 
-  // Socket listener
+  // Socket listener setup
   useEffect(() => {
     if (!socket || !selectedUser?._id || !user?._id) return;
+
     joinPrivateChat(selectedUser._id);
 
     const handleNewPrivateMessage = (message) => {
       if (!message?.sender || !message?.receiver) return;
       const ids = [message.sender._id || message.sender, message.receiver._id || message.receiver];
       const current = [user._id, selectedUser._id];
-      if (ids.sort().join("_") === current.sort().join("_"))
+      if (ids.sort().join("_") === current.sort().join("_")) {
         setMessages((prev) => [...prev, message]);
+      }
     };
 
     socket.on("newPrivateMessage", handleNewPrivateMessage);
+
     return () => {
       leavePrivateChat(selectedUser._id);
       socket.off("newPrivateMessage", handleNewPrivateMessage);
     };
   }, [socket, selectedUser?._id, user?._id, joinPrivateChat, leavePrivateChat]);
 
-  // File upload
+  // --- ⬇️ Upload image to AWS S3 using presigned POST ---
   const uploadFile = async (file) => {
-    const contentType = file.type || "application/octet-stream";
-    const extension = file.name?.split(".").pop()?.toLowerCase();
-    const { data } = await axios.get(`${BACKEND_URL}/uploads/workshop-image-post`, {
-      params: { contentType, extension },
-    });
-    const { url, fields, publicUrl } = data.data;
-    const formData = new FormData();
-    Object.entries(fields).forEach(([k, v]) => formData.append(k, v));
-    formData.append("file", file);
-    const resp = await fetch(url, { method: "POST", body: formData });
-    if (!resp.ok) throw new Error("File upload failed");
-    return publicUrl;
+    try {
+      const contentType = file.type;
+      const extension = file.name.split(".").pop();
+
+      // Step 1: Get presigned URL and fields
+      const res = await axios.get(`${BACKEND_URL}/uploads/workshop-image-post`, {
+        params: { contentType, extension },
+      });
+
+      const { url, fields, publicUrl } = res.data.data;
+      if (!url || !fields || !publicUrl) {
+        throw new Error("Invalid upload configuration");
+      }
+
+      // Step 2: Upload file to S3
+      const formData = new FormData();
+      Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
+      formData.append("file", file);
+
+      const uploadResponse = await fetch(url, { method: "POST", body: formData });
+      if (!uploadResponse.ok) throw new Error("Failed to upload image to S3");
+
+      return publicUrl;
+    } catch (err) {
+      console.error("Upload error:", err);
+      toast.error("Image upload failed");
+      throw err;
+    }
   };
 
+  // --- ⬇️ Send message handler (text + image) ---
   const handleSend = async () => {
     if (!user?.token) {
       toast.error("Please login to send messages");
       return logout();
     }
     if ((!input.trim() && !selectedFile) || !selectedUser?._id) return;
+
     try {
       let content = input.trim();
       let type = "text";
@@ -99,19 +120,26 @@ export default function UserMessageBox({ selectedUser }) {
       if (selectedFile) {
         setUploading(true);
         content = await uploadFile(selectedFile);
-        type = "file";
+        type = "image"; // 👈 important: use "image" type
         setSelectedFile(null);
         setUploading(false);
       }
 
-      await axios.post(
+      const res = await axios.post(
         `${BACKEND_URL}/chat`,
         { receiverId: selectedUser._id, type, content },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
+      const created = res?.data?.data || res?.data?.message || res?.data;
+      if (created) {
+        const exists = messages.some((m) => m._id === created._id || m.id === created.id);
+        if (!exists) setMessages((prev) => [...prev, created]);
+      }
+
       setInput("");
     } catch (err) {
+      console.error("Send message error:", err);
       if (err?.response?.status === 401) {
         toast.error("Session expired. Please log in again.");
         logout();
@@ -123,18 +151,18 @@ export default function UserMessageBox({ selectedUser }) {
   };
 
   const formatTime = (d) =>
-    d
-      ? new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-      : "";
+    d ? new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow">
+      {/* Header */}
       <div className="p-4 border-b flex items-center justify-between">
         <h2 className="font-bold text-lg">
           💬 Chat with {selectedUser?.username || selectedUser?.name || "User"}
         </h2>
       </div>
 
+      {/* Messages list */}
       <div className="flex-1 p-4 overflow-y-auto space-y-4">
         {loading ? (
           <p className="text-gray-400">Loading messages...</p>
@@ -158,10 +186,12 @@ export default function UserMessageBox({ selectedUser }) {
                       : "bg-gray-200 text-gray-800 rounded-bl-none"
                   }`}
                 >
-                  {msg.type === "file" ? (
-                    <div className="space-y-2">
-                      <img src={msg.content} alt="" srcset="" />
-                    </div>
+                  {msg.type === "image" ? (
+                    <img
+                      src={msg.content}
+                      alt="uploaded"
+                      className="max-w-[200px] max-h-[200px] rounded-lg"
+                    />
                   ) : (
                     msg.content
                   )}
@@ -176,6 +206,7 @@ export default function UserMessageBox({ selectedUser }) {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input area */}
       <div className="p-4 border-t">
         {selectedFile && (
           <div className="mb-2 p-2 bg-gray-100 rounded-lg flex items-center justify-between">
@@ -206,6 +237,7 @@ export default function UserMessageBox({ selectedUser }) {
             id="file-input-private"
             className="hidden"
             onChange={(e) => setSelectedFile(e.target.files[0])}
+            accept="image/*"
           />
           <label
             htmlFor="file-input-private"

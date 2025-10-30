@@ -1,25 +1,202 @@
+// import { createContext, useContext, useEffect, useState, useRef } from "react";
+// import { io } from "socket.io-client";
+// import { useAuth } from "./AuthContext";
+// import toast from "react-hot-toast";
+// import jwtDecode from "jwt-decode";
+
+// const SocketContext = createContext();
+
+// export const useSocket = () => {
+//   const ctx = useContext(SocketContext);
+//   if (!ctx) throw new Error("useSocket must be used inside SocketProvider");
+//   return ctx;
+// };
+
+// export const SocketProvider = ({ children }) => {
+//   const [socket, setSocket] = useState(null);
+//   const [isConnected, setIsConnected] = useState(false);
+//   const [notifications, setNotifications] = useState([]);
+
+//   const activeChatRef = useRef(null); // currently open private chat
+//   const activeChannelRef = useRef(null); // currently open channel
+
+//   const { user, logout } = useAuth();
+
+//   // ✅ Token validation
+//   useEffect(() => {
+//     if (!user?.token) return;
+//     try {
+//       const decoded = jwtDecode(user.token);
+//       if (decoded.exp * 1000 < Date.now()) {
+//         toast.error("Session expired. Please log in again.");
+//         logout();
+//       }
+//     } catch {
+//       toast.error("Invalid token. Please log in again.");
+//       logout();
+//     }
+//   }, [user?.token]);
+
+//   // ✅ Connect socket when logged in
+//   useEffect(() => {
+//     if (!user?._id || !user?.token) return;
+
+//     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+//     const socketUrl = BACKEND_URL.replace("/api", "");
+
+//     const newSocket = io(socketUrl, {
+//       auth: { token: user.token },
+//       transports: ["websocket", "polling"],
+//       reconnection: true,
+//     });
+
+//     newSocket.on("connect", () => {
+//       console.log("🟢 Socket connected:", newSocket.id);
+//       setIsConnected(true);
+//       newSocket.emit("join", user._id);
+//     });
+
+//     newSocket.on("disconnect", () => {
+//       console.log("🔴 Socket disconnected");
+//       setIsConnected(false);
+//     });
+
+//     // ✅ CHANNEL MESSAGE HANDLER
+//     newSocket.on("newMessage", (message) => {
+//       const senderId = message.sender?._id || message.sender;
+//       const channelId = message.channel?._id || message.channel;
+
+//       // Skip if message is from self
+//       if (senderId === user._id) return;
+
+//       // Skip if currently in that channel
+//       if (activeChannelRef.current === channelId) {
+//         console.log("📨 Message ignored (active channel)");
+//         return;
+//       }
+
+//       // ✅ Show channel notification
+//       console.log("🔔 Channel notification triggered");
+//       toast.success(`💬 New message in ${message.channel?.name || "a channel"}`);
+//       setNotifications((prev) => [
+//         {
+//           type: "channel",
+//           text: `💬 New message in ${message.channel?.name || "a channel"}`,
+//           sender: message.sender?.username || "User",
+//           content: message.content,
+//           time: new Date().toISOString(),
+//         },
+//         ...prev,
+//       ]);
+//     });
+
+//     // ✅ PRIVATE MESSAGE HANDLER
+//     newSocket.on("newPrivateMessage", (message) => {
+//       const senderId = message.sender?._id || message.sender;
+
+//       // Skip if message is from self
+//       if (senderId === user._id) return;
+
+//       // Skip if currently chatting with that user
+//       if (activeChatRef.current === senderId) {
+//         console.log("📨 Message ignored (active private chat)");
+//         return;
+//       }
+
+//       // ✅ Show private chat notification
+//       console.log("🔔 Private chat notification triggered");
+//       toast(`📩 New message from ${message.sender?.name || "User"}`);
+//       setNotifications((prev) => [
+//         {
+//           type: "private",
+//           text: `📩 Message from ${message.sender?.name || "User"}`,
+//           sender: message.sender?.username || "User",
+//           content: message.content,
+//           time: new Date().toISOString(),
+//         },
+//         ...prev,
+//       ]);
+//     });
+
+//     setSocket(newSocket);
+//     return () => {
+//       newSocket.disconnect();
+//     };
+//   }, [user?._id, user?.token]);
+
+//   // ✅ Utility functions for chat/channel management
+//   const joinChannel = (channelId) => {
+//     if (!socket) return;
+//     activeChatRef.current = null; // clear private chat
+//     activeChannelRef.current = channelId;
+//     socket.emit("joinChannel", channelId);
+//     console.log("✅ Joined channel:", channelId);
+//   };
+
+//   const leaveChannel = (channelId) => {
+//     if (!socket) return;
+//     if (activeChannelRef.current === channelId) activeChannelRef.current = null;
+//     socket.emit("leaveChannel", channelId);
+//     console.log("🚪 Left channel:", channelId);
+//   };
+
+//   const joinPrivateChat = (targetId) => {
+//     if (!socket) return;
+//     activeChannelRef.current = null; // clear active channel
+//     activeChatRef.current = targetId;
+//     socket.emit("joinPrivateChat", { userId: user._id, targetId });
+//     console.log("💬 Joined private chat with:", targetId);
+//   };
+
+//   const leavePrivateChat = (targetId) => {
+//     if (!socket) return;
+//     if (activeChatRef.current === targetId) activeChatRef.current = null;
+//     socket.emit("leavePrivateChat", { userId: user._id, targetId });
+//     console.log("🚪 Left private chat:", targetId);
+//   };
+
+//   return (
+//     <SocketContext.Provider
+//       value={{
+//         socket,
+//         isConnected,
+//         notifications,
+//         setNotifications,
+//         joinChannel,
+//         leaveChannel,
+//         joinPrivateChat,
+//         leavePrivateChat,
+//       }}
+//     >
+//       {children}
+//     </SocketContext.Provider>
+//   );
+// };
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 import toast from "react-hot-toast";
-import jwtDecode from "jwt-decode"; 
+import jwtDecode from "jwt-decode";
 
 const SocketContext = createContext();
 
 export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (!context) throw new Error("useSocket must be used within a SocketProvider");
-  return context;
+  const ctx = useContext(SocketContext);
+  if (!ctx) throw new Error("useSocket must be used inside SocketProvider");
+  return ctx;
 };
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const activeChatRef = useRef(null); 
+
+  const activeChatRef = useRef(null); // currently open private chat
+  const activeChannelRef = useRef(null); // currently open channel
+
   const { user, logout } = useAuth();
 
-  // Token validation — auto logout if invalid or expired
+  // ✅ Token validation
   useEffect(() => {
     if (!user?.token) return;
     try {
@@ -34,12 +211,12 @@ export const SocketProvider = ({ children }) => {
     }
   }, [user?.token]);
 
-  // Initialize socket
+  // ✅ Connect socket when logged in
   useEffect(() => {
-    if (!user?.token || !user?._id) return;
+    if (!user?._id || !user?.token) return;
 
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-    const socketUrl = BACKEND_URL.replace(".com/api", ".com");
+    const socketUrl = BACKEND_URL.replace("/api", "");
 
     const newSocket = io(socketUrl, {
       auth: { token: user.token },
@@ -47,28 +224,44 @@ export const SocketProvider = ({ children }) => {
       reconnection: true,
     });
 
+    // ------------------------
+    // Connection events
+    // ------------------------
     newSocket.on("connect", () => {
-      console.log("Socket connected:", newSocket.id);
+      console.log("🟢 Socket connected:", newSocket.id);
       setIsConnected(true);
       newSocket.emit("join", user._id);
     });
 
     newSocket.on("disconnect", () => {
-      console.log("Socket disconnected");
+      console.log("🔴 Socket disconnected");
       setIsConnected(false);
     });
 
-    // CHANNEL MESSAGES
+    // ------------------------
+    // ✅ CHANNEL MESSAGE HANDLER
+    // ------------------------
     newSocket.on("newMessage", (message) => {
       const senderId = message.sender?._id || message.sender;
+      const channelId = message.channel?._id || message.channel;
+
+      // Skip if message is from self
       if (senderId === user._id) return;
 
+      // Skip if currently in that channel
+      if (activeChannelRef.current === channelId) {
+        console.log("📨 Message ignored (active channel)");
+        return;
+      }
+
+      // ✅ Show channel notification
+      console.log("🔔 Channel notification triggered");
       toast.success(`💬 New message in ${message.channel?.name || "a channel"}`);
       setNotifications((prev) => [
         {
           type: "channel",
-          text: `💬 New message in ${message.channel?.name || "channel"}`,
-          sender: message.sender?.username || "Someone",
+          text: `💬 New message in ${message.channel?.name || "a channel"}`,
+          sender: message.sender?.username || "User",
           content: message.content,
           time: new Date().toISOString(),
         },
@@ -76,82 +269,122 @@ export const SocketProvider = ({ children }) => {
       ]);
     });
 
-    //  PRIVATE MESSAGE (received in real time)
+    // ------------------------
+    // ✅ PRIVATE CHAT MESSAGE HANDLER (for active private chat)
+    // ------------------------
     newSocket.on("newPrivateMessage", (message) => {
       const senderId = message.sender?._id || message.sender;
-      const receiverId = message.receiver?._id || message.receiver;
 
-      // If we are the receiver but not currently chatting with the sender → show toast
-      if (receiverId === user._id && activeChatRef.current !== senderId) {
-        toast(`📩 New message from ${message.sender?.name || message.sender?.username || "User"}`);
-        setNotifications((prev) => [
-          {
-            type: "private",
-            text: `📩 Message from ${message.sender?.name || message.sender?.username || "User"}`,
-            sender: message.sender?.username || "User",
-            content: message.content,
-            time: new Date().toISOString(),
-          },
-          ...prev,
-        ]);
+      // Skip if message is from self
+      if (senderId === user._id) return;
+
+      // Skip if currently chatting with that user
+      if (activeChatRef.current === senderId) {
+        console.log("📨 Message ignored (active private chat)");
+        return;
       }
+
+      // ✅ Show private chat notification
+      console.log("🔔 Private chat message notification triggered");
+      toast(`📩 New message from ${message.sender?.name || "User"}`);
+      setNotifications((prev) => [
+        {
+          type: "private",
+          text: `📩 Message from ${message.sender?.name || "User"}`,
+          sender: message.sender?.username || "User",
+          content: message.content,
+          time: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
     });
 
-    //  PRIVATE NOTIFICATION (user not in that chat)
-    newSocket.on("newPrivateNotification", (payload) => {
-      // Example payload: { from: { _id, name, username }, content }
-      const senderName = payload?.from?.name || payload?.from?.username || "Someone";
+    // ------------------------
+    // ✅ PRIVATE CHAT NOTIFICATION HANDLER (for inactive chats)
+    // ------------------------
+    newSocket.on("newPrivateNotification", (notification) => {
+      const sender = notification.from;
+      const senderId = sender?._id || sender;
 
-      // Show only if we're not currently chatting with that sender
-      if (activeChatRef.current !== payload?.from?._id) {
-        toast(`📨 ${senderName} sent you a message`);
-        setNotifications((prev) => [
-          {
-            type: "private",
-            text: `📨 ${senderName} sent you a message`,
-            sender: senderName,
-            content: payload?.content || "",
-            time: new Date().toISOString(),
-          },
-          ...prev,
-        ]);
+      // Skip if self
+      if (senderId === user._id) return;
+
+      // Skip if currently chatting with that user
+      if (activeChatRef.current === senderId) {
+        console.log("📨 Private notification ignored (active chat)");
+        return;
       }
+
+      console.log("🔔 Private notification received");
+      toast(`📩 New message from ${sender?.name || "User"}`);
+      setNotifications((prev) => [
+        {
+          type: "private",
+          text: `📩 Message from ${sender?.name || "User"}`,
+          sender: sender?.username || "User",
+          content: notification.content,
+          time: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
     });
 
+    // ------------------------
     // Cleanup
+    // ------------------------
     setSocket(newSocket);
     return () => {
       newSocket.disconnect();
     };
   }, [user?._id, user?.token]);
 
-  // Helper: Join / Leave Channel or Private Chat
-  const joinChannel = (channelId) => socket?.emit("joinChannel", channelId);
-  const leaveChannel = (channelId) => socket?.emit("leaveChannel", channelId);
+  // ------------------------
+  // ✅ Utility functions for chat/channel management
+  // ------------------------
+  const joinChannel = (channelId) => {
+    if (!socket) return;
+    activeChatRef.current = null; // clear private chat
+    activeChannelRef.current = channelId;
+    socket.emit("joinChannel", channelId);
+    console.log("✅ Joined channel:", channelId);
+  };
+
+  const leaveChannel = (channelId) => {
+    if (!socket) return;
+    if (activeChannelRef.current === channelId) activeChannelRef.current = null;
+    socket.emit("leaveChannel", channelId);
+    console.log("🚪 Left channel:", channelId);
+  };
 
   const joinPrivateChat = (targetId) => {
-    if (!user?._id || !targetId) return;
+    if (!socket) return;
+    activeChannelRef.current = null; // clear active channel
     activeChatRef.current = targetId;
-    socket?.emit("joinPrivateChat", { userId: user._id, targetId });
+    socket.emit("joinPrivateChat", { userId: user._id, targetId });
+    console.log("💬 Joined private chat with:", targetId);
   };
 
   const leavePrivateChat = (targetId) => {
-    if (!user?._id || !targetId) return;
+    if (!socket) return;
     if (activeChatRef.current === targetId) activeChatRef.current = null;
-    socket?.emit("leavePrivateChat", { userId: user._id, targetId });
+    socket.emit("leavePrivateChat", { userId: user._id, targetId });
+    console.log("🚪 Left private chat:", targetId);
   };
 
-  const value = {
-    socket,
-    isConnected,
-    notifications,
-    setNotifications,
-    joinChannel,
-    leaveChannel,
-    joinPrivateChat,
-    leavePrivateChat,
-    activeChatRef,
-  };
-
-  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
+  return (
+    <SocketContext.Provider
+      value={{
+        socket,
+        isConnected,
+        notifications,
+        setNotifications,
+        joinChannel,
+        leaveChannel,
+        joinPrivateChat,
+        leavePrivateChat,
+      }}
+    >
+      {children}
+    </SocketContext.Provider>
+  );
 };
