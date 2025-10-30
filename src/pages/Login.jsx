@@ -164,19 +164,6 @@ export default function Login() {
             {loading || authLoading ? 'Logging in...' : `Login as ${role}`}
           </button>
         </form>
-
-        <div className="mt-6 p-3 bg-gray-100 rounded-lg text-xs text-gray-600">
-          <p>
-            <strong>Backend URL:</strong> {import.meta.env.VITE_BACKEND_URL}
-          </p>
-          <p className="mt-1">
-            <strong>Login Type:</strong> {role}
-          </p>
-          <p className="mt-1">
-            <strong>Status:</strong>{' '}
-            {loading || authLoading ? 'Loading...' : error ? 'Error' : 'Ready'}
-          </p>
-        </div>
       </div>
     </div>
   );
